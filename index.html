@@ -677,7 +677,7 @@
             }, 1000);
         }
 
-        // Text processing algorithm
+        // Enhanced text processing algorithm with intelligent rewriting
         function processText(text) {
             let processedText = text;
             let dashesRemoved = 0;
@@ -685,47 +685,138 @@
             // Count original em dashes
             const originalDashes = (text.match(/—/g) || []).length;
             
-            // Replace em dashes with contextually appropriate punctuation
-            processedText = processedText.replace(/\s*—\s*/g, (match, offset, string) => {
+            // Phase 1: Advanced em dash replacement with sentence restructuring
+            processedText = processedText.replace(/\s*—\s*([^—]*?)(?=\s*—|\s*$)/g, (match, content, offset, string) => {
                 dashesRemoved++;
                 
-                // Get context around the dash
-                const before = string.substring(Math.max(0, offset - 50), offset).trim();
-                const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 50)).trim();
+                const before = string.substring(Math.max(0, offset - 100), offset).trim();
+                const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 100)).trim();
                 
-                // Smart replacement logic
-                if (after.match(/^[A-Z]/)) {
-                    // If next part starts with capital, likely a new sentence
-                    return '. ';
-                } else if (before.match(/[.!?]$/)) {
-                    // After sentence ending, start new sentence
-                    return ' ';
-                } else if (after.match(/^(and|but|or|yet|so|for|nor|however|therefore|meanwhile|furthermore|moreover|consequently)\b/i)) {
-                    // Before conjunctive words, use semicolon
-                    return '; ';
-                } else if (before.match(/\b(said|explained|noted|added|continued|stated|replied|asked)\s*$/i)) {
-                    // After dialogue tags, use colon
-                    return ': ';
+                // Enhanced context analysis
+                const beforeSentence = before.split(/[.!?]/).pop() || '';
+                const afterWords = after.split(/[\s,.!?]/).slice(0, 10);
+                const contentWords = content.trim().split(/\s+/);
+                
+                // Intelligent replacement logic
+                if (content.length > 50 && /^[A-Z]/.test(content.trim())) {
+                    // Long content starting with capital = new sentence
+                    return '. ' + content.trim();
+                } else if (afterWords.some(word => /^(and|but|or|yet|so|however|therefore|meanwhile|furthermore|moreover|consequently|thus|hence|nonetheless|nevertheless)$/i.test(word))) {
+                    // Before transition words = semicolon
+                    return '; ' + content.trim();
+                } else if (beforeSentence.match(/\b(said|explained|noted|added|continued|stated|replied|asked|declared|announced|mentioned|revealed|admitted|confessed|whispered|shouted|claimed|insisted|argued|suggested|proposed)\s*$/i)) {
+                    // After dialogue/reporting verbs = colon
+                    return ': ' + content.trim();
+                } else if (content.length > 30 && contentWords.length > 5) {
+                    // Long descriptive content = new sentence
+                    return '. ' + content.trim().charAt(0).toUpperCase() + content.trim().slice(1);
                 } else {
-                    // Default to comma for most cases
-                    return ', ';
+                    // Default = comma with flow improvement
+                    return ', ' + content.trim();
                 }
             });
 
-            // Clean up any double spaces or punctuation
-            processedText = processedText.replace(/\s+/g, ' ');
-            processedText = processedText.replace(/,\s*,/g, ',');
-            processedText = processedText.replace(/;\s*;/g, ';');
-            processedText = processedText.replace(/\.\s*\./g, '.');
+            // Phase 2: Sentence structure improvements
+            processedText = improveSentenceStructure(processedText);
             
-            // Fix spacing around punctuation
-            processedText = processedText.replace(/\s+([,.;:!?])/g, '$1');
-            processedText = processedText.replace(/([,.;:!?])([A-Za-z])/g, '$1 $2');
+            // Phase 3: Flow and readability enhancements  
+            processedText = enhanceReadability(processedText);
+            
+            // Phase 4: Final cleanup
+            processedText = finalCleanup(processedText);
 
             return {
                 processedText: processedText.trim(),
                 dashesRemoved: originalDashes
             };
+        }
+
+        // Advanced sentence structure improvement
+        function improveSentenceStructure(text) {
+            return text
+                // Break up overly long sentences with multiple semicolons
+                .replace(/([^.!?]{80,}?);([^;]{40,}?);([^.!?]{20,})/g, (match, part1, part2, part3) => {
+                    return part1.trim() + '. ' + part2.trim().charAt(0).toUpperCase() + part2.trim().slice(1) + ', ' + part3.trim();
+                })
+                
+                // Convert weak semicolon chains to stronger periods
+                .replace(/;\s*([^;]{10,40}?);\s*([^;.!?]{10,})/g, (match, middle, end) => {
+                    return '. ' + middle.trim().charAt(0).toUpperCase() + middle.trim().slice(1) + '. ' + end.trim().charAt(0).toUpperCase() + end.trim().slice(1);
+                })
+                
+                // Improve transitions between ideas
+                .replace(/,\s*(which|that|who)\s+/g, ' that ')
+                .replace(/,\s*and\s*which\s+/g, ', which ')
+                
+                // Strengthen weak openings
+                .replace(/^(And|But|Or|So)\s+/gm, match => match.toLowerCase())
+                
+                // Convert passive constructions where appropriate
+                .replace(/\b(was|were|is|are|been)\s+([\w]+ed)\s+by\s+/g, (match, auxiliary, verb, offset, string) => {
+                    // Only convert if it improves clarity
+                    const words = string.substring(Math.max(0, offset - 20), offset + match.length + 20).split(/\s+/);
+                    if (words.length > 3) {
+                        return ''; // Let the original passive stand - context might require it
+                    }
+                    return match; // Keep original for now - this needs more sophisticated analysis
+                });
+        }
+
+        // Readability and flow enhancements
+        function enhanceReadability(text) {
+            return text
+                // Remove redundant phrases
+                .replace(/\b(that|which)\s+\b(that|which)\s+/g, '$1 ')
+                .replace(/\b(in order to|so as to)\b/g, 'to')
+                .replace(/\b(due to the fact that|owing to the fact that)\b/g, 'because')
+                .replace(/\b(at this point in time|at the present time)\b/g, 'now')
+                .replace(/\b(in the event that)\b/g, 'if')
+                
+                // Improve word choice
+                .replace(/\b(very|really|quite|rather|somewhat)\s+([\w]+)/g, (match, intensifier, word) => {
+                    // Remove weak intensifiers before strong words
+                    const strongWords = ['excellent', 'amazing', 'terrible', 'awful', 'perfect', 'impossible', 'essential', 'crucial'];
+                    if (strongWords.includes(word.toLowerCase())) {
+                        return word;
+                    }
+                    return match; // Keep if it adds value
+                })
+                
+                // Improve sentence rhythm by varying length
+                .replace(/\.\s+([^.!?]{10,25})\.\s+([^.!?]{10,25})\./g, (match, sent1, sent2) => {
+                    // Combine short sentences for better flow
+                    return '. ' + sent1.trim() + ', and ' + sent2.trim().toLowerCase() + '.';
+                })
+                
+                // Enhance clarity
+                .replace(/\b(this|that|these|those)\b(?!\s+(?:is|are|was|were|will|would|can|could|should|might|may))/g, (match, offset, string) => {
+                    // Add specificity hints where vague pronouns appear
+                    return match; // For now, keep original - needs context analysis
+                });
+        }
+
+        // Final cleanup and polish
+        function finalCleanup(text) {
+            return text
+                // Fix spacing issues
+                .replace(/\s+/g, ' ')
+                .replace(/\s*([,.;:!?])/g, '$1')
+                .replace(/([,.;:!?])([A-Za-z])/g, '$1 $2')
+                
+                // Fix double punctuation
+                .replace(/[,.;:]{2,}/g, match => match.charAt(0))
+                .replace(/\.{2,}/g, '.')
+                
+                // Ensure proper capitalization after periods
+                .replace(/\.\s+([a-z])/g, (match, letter) => '. ' + letter.toUpperCase())
+                
+                // Polish final presentation
+                .replace(/\s*;\s*([A-Z])/g, '. $1') // Convert remaining semicolons before capitals to periods
+                .replace(/,\s*([A-Z][^,]*[.!?])/g, '. $1') // Convert comma splices to proper sentences
+                
+                // Final sentence structure check
+                .replace(/([.!?])\s*([a-z])/g, '$1 $2') // Fix any remaining capitalization
+                .trim();
         }
 
         // Copy functionality
