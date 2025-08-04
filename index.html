@@ -48,16 +48,117 @@
             position: relative;
         }
 
-        .logo {
-            font-size: 3.5rem;
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-badge {
+            position: relative;
+            width: 320px;
+            height: 200px;
+            margin-bottom: 15px;
+            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.4)) drop-shadow(0 0 40px rgba(255, 0, 128, 0.3));
+            transition: all 0.5s ease;
+        }
+
+        .logo-badge:hover {
+            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(255, 0, 128, 0.6));
+            transform: scale(1.03);
+        }
+
+        .badge-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid;
+            border-image: linear-gradient(45deg, #00ffff, #0088ff, #00ffff) 1;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(0, 20, 40, 0.9) 0%, rgba(20, 0, 40, 0.9) 100%);
+            box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1);
+        }
+
+        .badge-frame::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            background: linear-gradient(45deg, #00ffff, #0088ff, #00ffff);
+            border-radius: 24px;
+            z-index: -1;
+        }
+
+        .logo-text-em {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Courier New', monospace;
+            font-size: 2.2rem;
             font-weight: bold;
-            background: linear-gradient(45deg, var(--neon-cyan), var(--neon-pink));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 30px var(--neon-cyan);
-            margin-bottom: 10px;
-            letter-spacing: 2px;
+            color: #00ffff;
+            text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff, 0 0 45px #0088ff;
+            letter-spacing: 0.2em;
+        }
+
+        .dash-visual {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .play-arrow {
+            width: 0;
+            height: 0;
+            border-left: 20px solid #ff0080;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            filter: drop-shadow(0 0 10px #ff0080);
+        }
+
+        .dash-line {
+            width: 120px;
+            height: 8px;
+            background: linear-gradient(90deg, #ff0080, #ff44aa);
+            border-radius: 4px;
+            border: 2px solid #ff0080;
+            box-shadow: 0 0 15px #ff0080, inset 0 0 10px rgba(255, 255, 255, 0.2);
+        }
+
+        .logo-text-killer {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-family: 'Courier New', monospace;
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: #ff0080;
+            text-shadow: 0 0 15px #ff0080, 0 0 30px #ff0080, 0 0 45px #ff44aa;
+            letter-spacing: 0.15em;
+        }
+
+        .logo-image {
+            display: none;
+        }
+
+        .logo-backup {
+            display: none;
         }
 
         .tagline {
@@ -328,8 +429,34 @@
                 gap: 20px;
             }
 
-            .logo {
-                font-size: 2.5rem;
+            .logo-badge {
+                width: 280px;
+                height: 180px;
+            }
+
+            .logo-text-em {
+                font-size: 1.8rem;
+                top: 20px;
+            }
+
+            .logo-text-killer {
+                font-size: 2.2rem;
+                bottom: 20px;
+            }
+
+            .dash-visual {
+                top: 65px;
+            }
+
+            .dash-line {
+                width: 100px;
+                height: 6px;
+            }
+
+            .play-arrow {
+                border-left-width: 16px;
+                border-top-width: 10px;
+                border-bottom-width: 10px;
             }
 
             .stats {
@@ -387,7 +514,17 @@
 <body>
     <div class="container">
         <header>
-            <h1 class="logo">EM DASH KILLER</h1>
+            <div class="logo-container">
+                <div class="logo-badge">
+                    <div class="badge-frame"></div>
+                    <div class="logo-text-em">EM DASH</div>
+                    <div class="dash-visual">
+                        <div class="play-arrow"></div>
+                        <div class="dash-line"></div>
+                    </div>
+                    <div class="logo-text-killer">KILLER</div>
+                </div>
+            </div>
             <p class="tagline">Transform AI-Generated Text Into Natural, Professional Writing</p>
             
             <div class="stats">
