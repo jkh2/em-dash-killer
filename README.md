@@ -1,5 +1,5 @@
 # ⚡ EM DASH KILLER ⚡
-
+<img src="emdashkiller.png">
 **Transform AI-Generated Text Into Natural, Professional Writing**
 
 [![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
