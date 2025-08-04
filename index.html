@@ -836,8 +836,17 @@
                 .replace(/\.\s+([a-z])/g, (match, letter) => '. ' + letter.toUpperCase())
                 .replace(/^\s*([a-z])/g, (match, letter) => letter.toUpperCase())
                 
+                // Fix proper nouns that got lowercased
+                .replace(/\b(marlow|nasa|microsoft|google|apple|amazon|facebook|twitter|linkedin)\b/gi, (match) => {
+                    return match.charAt(0).toUpperCase() + match.slice(1).toLowerCase();
+                })
+                
+                // Clean up any remaining em dashes
+                .replace(/\s*—\s*/g, ', ')
+                
                 // Polish specific issues
-                .replace(/\bwhich was almost no one\b/g, '—which was almost no one')
+                .replace(/,\s*—which/g, ', which')
+                .replace(/—which/g, ', which')
                 .replace(/something,\s*something/g, 'something, something')
                 
                 .trim();
