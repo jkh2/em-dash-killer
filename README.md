@@ -10,7 +10,7 @@
 
 ## 🎯 Live Demo
 
-**[Try EM DASH KILLER →](https://jkh2.io/em-dash-killer)**
+**[Try EM DASH KILLER →]https://jkh2.github.io/em-dash-killer)**
 
 ## 🚀 Features
 
