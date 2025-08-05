@@ -677,7 +677,7 @@
             }, 1000);
         }
 
-        // Advanced text processing algorithm focused on natural flow
+        // Advanced text processing algorithm focused on natural flow with paragraph breaks
         function processText(text) {
             let processedText = text;
             let dashesRemoved = 0;
@@ -685,23 +685,68 @@
             // Count original em dashes
             const originalDashes = (text.match(/—/g) || []).length;
             
-            // Phase 1: Replace em dashes while preserving natural groupings
-            const dashSegments = text.split(/\s*—\s*/);
-            if (dashSegments.length > 1) {
-                dashesRemoved = dashSegments.length - 1;
-                processedText = intelligentlyReconnect(dashSegments);
-            }
-
-            // Phase 2: Fix any remaining fragment issues
-            processedText = repairFragments(processedText);
+            // Phase 1: Preserve existing paragraph structure
+            const paragraphs = text.split(/\n\s*\n|\r\n\s*\r\n/);
             
-            // Phase 3: Polish and clean up
-            processedText = finalCleanup(processedText);
+            if (paragraphs.length > 1) {
+                // Process each paragraph separately and rejoin
+                processedText = paragraphs.map(paragraph => {
+                    if (paragraph.trim()) {
+                        return processParagraph(paragraph.trim());
+                    }
+                    return '';
+                }).filter(p => p).join('\n\n');
+                
+                dashesRemoved = originalDashes;
+            } else {
+                // Single paragraph or no breaks - process normally but add intelligent breaks
+                processedText = processParagraph(text);
+                processedText = addIntelligentParagraphBreaks(processedText);
+                dashesRemoved = originalDashes;
+            }
 
             return {
                 processedText: processedText.trim(),
-                dashesRemoved: originalDashes
+                dashesRemoved: dashesRemoved
             };
+        }
+
+        // Process a single paragraph while maintaining flow
+        function processParagraph(text) {
+            // Replace em dashes while preserving natural groupings
+            const dashSegments = text.split(/\s*—\s*/);
+            if (dashSegments.length > 1) {
+                return intelligentlyReconnect(dashSegments);
+            }
+            return text;
+        }
+
+        // Add intelligent paragraph breaks to long text
+        function addIntelligentParagraphBreaks(text) {
+            // Don't break if text is reasonably short
+            if (text.length < 400) return text;
+            
+            return text
+                // Break at major topic shifts (common transition phrases)
+                .replace(/\.\s+(However|Meanwhile|Furthermore|Moreover|In addition|On the other hand|Conversely|Nevertheless|Nonetheless|In contrast|Similarly|Likewise|Therefore|Thus|Consequently|As a result|For example|For instance|In fact|Indeed|Of course|Naturally|Obviously|Clearly|Certainly|Undoubtedly|Without question|Beyond doubt)/g, '.\n\n$1')
+                
+                // Break at temporal transitions
+                .replace(/\.\s+(Later|Earlier|Meanwhile|Subsequently|Previously|Afterward|Before|After|Then|Next|Finally|Eventually|Ultimately|In the end|At last|At first|Initially|Originally|Now|Today|Yesterday|Tomorrow|Recently|Currently|Presently)/g, '.\n\n$1')
+                
+                // Break at major scene or setting changes
+                .replace(/\.\s+(The next day|The following morning|Hours later|Minutes later|Days later|Weeks later|Months later|Years later|Suddenly|All at once|Without warning|In an instant|Immediately|Instantly)/g, '.\n\n$1')
+                
+                // Break at dialogue shifts (when speakers change)
+                .replace(/("\s*[A-Z][^"]*")\s*([A-Z][a-z]+ said|[A-Z][a-z]+ replied|[A-Z][a-z]+ asked|[A-Z][a-z]+ shouted|[A-Z][a-z]+ whispered|[A-Z][a-z]+ continued)/g, '$1\n\n$2')
+                
+                // Break very long sentences that should probably be separate paragraphs
+                .replace(/([.!?])\s+([A-Z][^.!?]{200,}?[.!?])\s+([A-Z])/g, '$1\n\n$2\n\n$3')
+                
+                // Break at clear topic shifts (after 150+ characters, look for natural breaks)
+                .replace(/([.!?])\s+([A-Z][^.!?]{150,}?[.!?])\s+(But|And|However|Yet|Still|Now|Then|So|Thus|Therefore|Meanwhile|Furthermore|Moreover|In addition|Additionally|Also|Besides|Similarly|Likewise|In contrast|On the contrary|Conversely|Nevertheless|Nonetheless|Otherwise|Instead|Rather|Alternatively)/g, '$1\n\n$2\n\n$3')
+                
+                // Clean up any triple line breaks
+                .replace(/\n\n\n+/g, '\n\n');
         }
 
         // Intelligently reconnect segments that were separated by em dashes
@@ -772,6 +817,12 @@
                 }
             }
             
+            // Phase 2: Fix any remaining fragment issues
+            processedText = repairFragments(processedText);
+            
+            // Phase 3: Polish and clean up
+            processedText = finalCleanup(processedText);
+
             return result;
         }
 
