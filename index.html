@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EM DASH KILLER - Transform AI Text Into Natural Writing</title>
+    <title>EM DASH KILLER - Transform AI Text Into Natural Writing<br>A Free Service By:  Sentinel AI Systems</title>
     <meta name="description" content="Remove em dashes and AI-generated phrases from text to make it sound natural and professional. Instant, private text transformation tool.">
     <style>
         * {
@@ -252,6 +252,7 @@
             border-color: var(--neon-green);
             cursor: default;
             padding: 20px;
+            line-height: 1.4;
         }
 
         .settings {
@@ -842,7 +843,7 @@
                     }
                 }
                 if (shouldBreak && currentParagraph.length > 100) {
-                    formattedText += currentParagraph + '\n\n';
+                    formattedText += currentParagraph + '\n\n\n';
                     currentParagraph = '';
                     sentenceCount = 0;
                     paragraphsAdded++;
@@ -854,7 +855,7 @@
             }
             
             processedText = formattedText
-                .replace(/\n\n\n+/g, '\n\n')
+                .replace(/\n\n\n\n+/g, '\n\n\n')
                 .replace(/^\s+|\s+$/g, '')
                 .replace(/\n\s+/g, '\n');
 
@@ -888,7 +889,7 @@
                     copyButton.style.background = '';
                 }, 2000);
             } catch (err) {
-                navigator.clipboard.writeText(outputText.value).then(() => {
+                navigator.clipboard.writeText(outputText.value.replace(/\n\n\n/g, '\r\n\r\n\r\n')).then(() => {
                     const copyButton = document.getElementById('copyButton');
                     const originalText = copyButton.textContent;
                     copyButton.textContent = '✅ COPIED!';
