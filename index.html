@@ -247,17 +247,40 @@
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
         }
 
-        textarea[readonly] {
+        .output-text {
+            width: 100%;
+            min-height: 300px;
             background: rgba(26, 26, 46, 0.9);
-            border-color: var(--neon-green);
-            cursor: default;
+            border: 2px solid var(--neon-green);
+            border-radius: 8px;
             padding: 20px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 1rem;
             line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .output-text p {
+            margin: 0 0 1em;
+            position: relative;
+        }
+
+        .output-text p:not(:last-child)::after {
+            content: '';
+            display: block;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
+            opacity: 0.3;
+            margin: 1em 0;
         }
 
         .settings {
             margin-bottom: 15px;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             gap: 10px;
         }
@@ -362,6 +385,7 @@
             gap: 10px;
             margin-top: 15px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .results {
@@ -553,8 +577,7 @@
                     <div class="logo-text-killer">KILLER</div>
                 </div>
             </div>
-            <p class="tagline">Transform AI-Generated Text Into Natural, Professional Writing<br>
-            <br>A Free Service By:  Sentinel AI Systems</p>
+            <p class="tagline">Transform AI-Generated Text Into Natural, Professional Writing</p>
             
             <div class="stats">
                 <div class="stat">
@@ -595,15 +618,11 @@
             <div class="panel">
                 <h2 class="panel-title">✨ OUTPUT: Natural Text</h2>
                 <label for="outputText" class="textarea-label">Your transformed text:</label>
-                <textarea 
-                    id="outputText" 
-                    placeholder="Your transformed text will appear here with proper formatting and natural flow..."
-                    readonly
-                    aria-label="Processed output text"
-                ></textarea>
+                <pre id="outputText" class="output-text" aria-label="Processed output text"></pre>
                 <div class="output-actions">
                     <button class="copy-button" id="copyButton" onclick="copyOutput()" aria-label="Copy processed text">📋 COPY CLEAN TEXT</button>
-                    <button class="copy-button" id="downloadButton" onclick="downloadOutput()" aria-label="Download processed text">💾 DOWNLOAD AS TEXT</button>
+                    <button class="copy-button" id="downloadTextButton" onclick="downloadOutput()" aria-label="Download processed text">💾 DOWNLOAD AS TEXT</button>
+                    <button class="copy-button" id="downloadDocxButton" onclick="downloadDocx()" aria-label="Download processed text as DOCX">📄 DOWNLOAD AS DOCX</button>
                     <button class="copy-button" id="undoButton" onclick="undoChanges()" aria-label="Undo changes">🔄 UNDO</button>
                     <button class="copy-button" id="resetButton" onclick="resetForm()" aria-label="Reset form">🗑️ RESET</button>
                 </div>
@@ -657,6 +676,27 @@
     </div>
 
     <script>
+        // Placeholder for minified docx.js (version 7.3.0)
+        // In production, download from https://unpkg.com/docx@7.3.0/build/index.js, minify, and embed here
+        const docx = {
+            Document: function() {
+                this.children = [];
+                this.addParagraph = function(paragraph) { this.children.push(paragraph); };
+            },
+            Paragraph: function(options) {
+                this.textRuns = [];
+                this.properties = options.properties || {};
+                this.addRun = function(run) { this.textRuns.push(run); };
+            },
+            TextRun: function(text) { this.text = text; },
+            Packer: {
+                toBlob: function(doc) {
+                    return new Blob([JSON.stringify(doc)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+                }
+            },
+            ParagraphProperties: function(options) { return options; }
+        };
+
         let totalProcessed = parseInt(localStorage.getItem('totalProcessed') || '0');
         let totalDashes = parseInt(localStorage.getItem('totalDashes') || '0');
         let originalText = '';
@@ -697,7 +737,7 @@
             setTimeout(() => {
                 const result = processText(inputText);
                 
-                document.getElementById('outputText').value = result.processedText;
+                document.getElementById('outputText').innerText = result.processedText;
                 totalProcessed++;
                 totalDashes += result.dashesRemoved;
                 saveStats();
@@ -816,26 +856,26 @@
             const sentences = processedText.split(/(?<=[.!?])\s+/);
             let formattedText = '';
             let currentParagraph = '';
-            let sentenceCount = 0;
-            
+            let wordCount = 0;
+
             for (let i = 0; i < sentences.length; i++) {
                 const sentence = sentences[i].trim();
                 if (!sentence) continue;
-                
+
                 currentParagraph += (currentParagraph ? ' ' : '') + sentence;
-                sentenceCount++;
-                
+                wordCount += sentence.split(/\s+/).length;
+
                 let shouldBreak = false;
-                if (sentence.match(/^(However|Meanwhile|Furthermore|Moreover|In addition|On the other hand|Conversely|Nevertheless|Nonetheless|In contrast|Similarly|Likewise|Therefore|Thus|Consequently|As a result|For example|For instance|In fact|Indeed)/)) {
+                if (sentence.match(/^(However|Meanwhile|Furthermore|Moreover|In addition|On the other hand|Conversely|Nevertheless|Nonetheless|In contrast|Similarly|Likewise|Therefore|Thus|Consequently|As a result|For example|For instance|In fact|Indeed)/i)) {
                     shouldBreak = true;
                 }
-                if (sentence.match(/^(Later|Earlier|Meanwhile|Subsequently|Previously|Afterward|Before|After|Then|Next|Finally|Eventually|Ultimately|Now|Today|Yesterday|Tomorrow|Recently|Currently)/)) {
+                if (sentence.match(/^(Later|Earlier|Meanwhile|Subsequently|Previously|Afterward|Before|After|Then|Next|Finally|Eventually|Ultimate|Now|Today|Yesterday|Tomorrow|Recently|Currently)/i)) {
                     shouldBreak = true;
                 }
                 if (sentence.match(/"[^"]*"/) && i < sentences.length - 1 && !sentences[i + 1].match(/^(said|explained|noted|added|continued|stated|replied|asked)/i)) {
                     shouldBreak = true;
                 }
-                if (sentenceCount >= 4 && !shouldBreak) {
+                if (wordCount >= 150 && !shouldBreak) {
                     if (i < sentences.length - 1) {
                         const nextSentence = sentences[i + 1];
                         if (nextSentence && nextSentence.match(/^[A-Z]/)) {
@@ -846,15 +886,15 @@
                 if (shouldBreak && currentParagraph.length > 100) {
                     formattedText += currentParagraph + '\n\n\n';
                     currentParagraph = '';
-                    sentenceCount = 0;
+                    wordCount = 0;
                     paragraphsAdded++;
                 }
             }
-            
+
             if (currentParagraph) {
                 formattedText += currentParagraph;
             }
-            
+
             processedText = formattedText
                 .replace(/\n\n\n\n+/g, '\n\n\n')
                 .replace(/^\s+|\s+$/g, '')
@@ -870,14 +910,17 @@
 
         function copyOutput() {
             const outputText = document.getElementById('outputText');
-            
-            if (!outputText.value.trim()) {
+
+            if (!outputText.innerText.trim()) {
                 alert('⚠️ Nothing to copy! Process some text first.');
                 return;
             }
 
-            outputText.select();
-            outputText.setSelectionRange(0, 99999);
+            const range = document.createRange();
+            range.selectNodeContents(outputText);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
 
             try {
                 document.execCommand('copy');
@@ -889,8 +932,9 @@
                     copyButton.textContent = originalText;
                     copyButton.style.background = '';
                 }, 2000);
+                selection.removeAllRanges();
             } catch (err) {
-                navigator.clipboard.writeText(outputText.value.replace(/\n\n\n/g, '\r\n\r\n\r\n')).then(() => {
+                navigator.clipboard.writeText(outputText.innerText.replace(/\n\n\n/g, '\r\n\r\n\r\n')).then(() => {
                     const copyButton = document.getElementById('copyButton');
                     const originalText = copyButton.textContent;
                     copyButton.textContent = '✅ COPIED!';
@@ -904,8 +948,8 @@
         }
 
         function downloadOutput() {
-            const outputText = document.getElementById('outputText').value;
-            
+            const outputText = document.getElementById('outputText').innerText;
+
             if (!outputText.trim()) {
                 alert('⚠️ Nothing to download! Process some text first.');
                 return;
@@ -921,7 +965,51 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            const downloadButton = document.getElementById('downloadButton');
+            const downloadButton = document.getElementById('downloadTextButton');
+            const originalText = downloadButton.textContent;
+            downloadButton.textContent = '✅ DOWNLOADED!';
+            downloadButton.style.background = 'rgba(0, 255, 65, 0.2)';
+            setTimeout(() => {
+                downloadButton.textContent = originalText;
+                downloadButton.style.background = '';
+            }, 2000);
+        }
+
+        function downloadDocx() {
+            const outputText = document.getElementById('outputText').innerText;
+
+            if (!outputText.trim()) {
+                alert('⚠️ Nothing to download! Process some text first.');
+                return;
+            }
+
+            const doc = new docx.Document();
+            const paragraphs = outputText.split('\n\n\n').filter(p => p.trim());
+
+            paragraphs.forEach((paragraphText, index) => {
+                const paragraph = new docx.Paragraph({
+                    properties: {
+                        spacing: {
+                            after: 240 // Equivalent to 12pt spacing after paragraph
+                        }
+                    }
+                });
+                const textRun = new docx.TextRun(paragraphText.trim());
+                paragraph.addRun(textRun);
+                doc.addParagraph(paragraph);
+            });
+
+            const blob = docx.Packer.toBlob(doc);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'em-dash-killer-output.docx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            const downloadButton = document.getElementById('downloadDocxButton');
             const originalText = downloadButton.textContent;
             downloadButton.textContent = '✅ DOWNLOADED!';
             downloadButton.style.background = 'rgba(0, 255, 65, 0.2)';
@@ -933,7 +1021,7 @@
 
         function undoChanges() {
             if (originalText) {
-                document.getElementById('outputText').value = originalText;
+                document.getElementById('outputText').innerText = originalText;
                 document.getElementById('results').style.display = 'none';
             }
         }
@@ -945,7 +1033,7 @@
         document.getElementById('inputText').addEventListener('input', function() {
             const text = this.value;
             const dashCount = (text.match(/—/g) || []).length;
-            
+
             if (dashCount > 0) {
                 document.getElementById('changesText').innerHTML = `
                     🎯 Found <strong>${dashCount}</strong> em dash${dashCount === 1 ? '' : 'es'} ready to eliminate!
@@ -973,6 +1061,10 @@
             if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
                 e.preventDefault();
                 downloadOutput();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'W') {
+                e.preventDefault();
+                downloadDocx();
             }
         });
 
