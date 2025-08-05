@@ -651,300 +651,297 @@
         </footer>
     </div>
 
-    <script>
-        let totalProcessed = parseInt(localStorage.getItem('totalProcessed') || '0');
-        let totalDashes = parseInt(localStorage.getItem('totalDashes') || '0');
-        let originalText = '';
+   <script>
+    let totalProcessed = parseInt(localStorage.getItem('totalProcessed') || '0');
+    let totalDashes = parseInt(localStorage.getItem('totalDashes') || '0');
+    let originalText = '';
 
-        function updateStats() {
-            document.getElementById('totalProcessed').textContent = totalProcessed;
-            document.getElementById('totalDashes').textContent = totalDashes;
-            document.getElementById('credibilityBoost').textContent = Math.min(totalDashes * 2, 100) + '%';
+    function updateStats() {
+        document.getElementById('totalProcessed').textContent = totalProcessed;
+        document.getElementById('totalDashes').textContent = totalDashes;
+        document.getElementById('credibilityBoost').textContent = Math.min(totalDashes * 2, 100) + '%';
+    }
+
+    function saveStats() {
+        localStorage.setItem('totalProcessed', totalProcessed.toString());
+        localStorage.setItem('totalDashes', totalDashes.toString());
+    }
+
+    updateStats();
+
+    function killDashes() {
+        const inputText = document.getElementById('inputText').value;
+        
+        if (!inputText.trim()) {
+            alert('⚠️ Please paste some text to process!');
+            return;
         }
 
-        function saveStats() {
-            localStorage.setItem('totalProcessed', totalProcessed.toString());
-            localStorage.setItem('totalDashes', totalDashes.toString());
+        if (inputText.length > 100000) {
+            alert('⚠️ Input is too large! Please limit to 100,000 characters.');
+            return;
         }
 
-        updateStats();
+        const killButton = document.getElementById('killButton');
+        const spinner = document.getElementById('spinner');
+        killButton.style.display = 'none';
+        spinner.style.display = 'block';
 
-        function killDashes() {
-            const inputText = document.getElementById('inputText').value;
+        originalText = inputText;
+
+        setTimeout(() => {
+            const result = processText(inputText);
             
-            if (!inputText.trim()) {
-                alert('⚠️ Please paste some text to process!');
-                return;
+            document.getElementById('outputText').value = result.processedText;
+            totalProcessed++;
+            totalDashes += result.dashesRemoved;
+            saveStats();
+            updateStats();
+
+            const resultsDiv = document.getElementById('results');
+            const changesText = document.getElementById('changesText');
+            
+            if (result.dashesRemoved > 0 || result.paragraphsAdded > 0 || result.phrasesReplaced > 0) {
+                let message = `🎯 <strong>SUCCESS!</strong> `;
+                let changes = [];
+                if (result.dashesRemoved > 0) {
+                    changes.push(`Eliminated <strong>${result.dashesRemoved}</strong> em dash${result.dashesRemoved === 1 ? '' : 'es'}`);
+                }
+                if (result.paragraphsAdded > 0) {
+                    changes.push(`added <strong>${result.paragraphsAdded}</strong> paragraph break${result.paragraphsAdded === 1 ? '' : 's'}`);
+                }
+                if (result.phrasesReplaced > 0) {
+                    changes.push(`replaced <strong>${result.phrasesReplaced}</strong> AI phrase${result.phrasesReplaced === 1 ? '' : 's'}`);
+                }
+                message += changes.join(' and ') + `!<br>Your text now flows naturally with proper formatting.`;
+                changesText.innerHTML = message;
+                resultsDiv.style.display = 'block';
+            } else {
+                changesText.innerHTML = `
+                    ✅ <strong>CLEAN!</strong> No em dashes or AI phrases found, and formatting looks good.<br>
+                    Your content already sounds naturally human!
+                `;
+                resultsDiv.style.display = 'block';
             }
 
-            if (inputText.length > 100000) {
-                alert('⚠️ Input is too large! Please limit to 100,000 characters.');
-                return;
+            killButton.style.display = 'block';
+            spinner.style.display = 'none';
+            killButton.focus();
+
+            if (window.innerWidth <= 768) {
+                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
+        }, 1000);
+    }
 
-            const killButton = document.getElementById('killButton');
-            const spinner = document.getElementById('spinner');
-            killButton.style.display = 'none';
-            spinner.style.display = 'block';
+    function processText(text) {
+        let processedText = text;
+        let dashesRemoved = 0;
+        let paragraphsAdded = 0;
+        let phrasesReplaced = 0;
 
-            originalText = inputText;
+        const dashReplacement = document.getElementById('dashReplacement').value;
+        const chunkSize = 10000;
+        let resultText = '';
 
-            setTimeout(() => {
-                const result = processText(inputText);
-                
-                document.getElementById('outputText').value = result.processedText;
-                totalProcessed++;
-                totalDashes += result.dashesRemoved;
-                saveStats();
-                updateStats();
-
-                const resultsDiv = document.getElementById('results');
-                const changesText = document.getElementById('changesText');
-                
-                if (result.dashesRemoved > 0 || result.paragraphsAdded > 0 || result.phrasesReplaced > 0) {
-                    let message = `🎯 <strong>SUCCESS!</strong> `;
-                    let changes = [];
-                    if (result.dashesRemoved > 0) {
-                        changes.push(`Eliminated <strong>${result.dashesRemoved}</strong> em dash${result.dashesRemoved === 1 ? '' : 'es'}`);
-                    }
-                    if (result.paragraphsAdded > 0) {
-                        changes.push(`added <strong>${result.paragraphsAdded}</strong> paragraph break${result.paragraphsAdded === 1 ? '' : 's'}`);
-                    }
-                    if (result.phrasesReplaced > 0) {
-                        changes.push(`replaced <strong>${result.phrasesReplaced}</strong> AI phrase${result.phrasesReplaced === 1 ? '' : 's'}`);
-                    }
-                    message += changes.join(' and ') + `!<br>Your text now flows naturally with proper formatting.`;
-                    changesText.innerHTML = message;
-                    resultsDiv.style.display = 'block';
-                } else {
-                    changesText.innerHTML = `
-                        ✅ <strong>CLEAN!</strong> No em dashes or AI phrases found, and formatting looks good.<br>
-                        Your content already sounds naturally human!
-                    `;
-                    resultsDiv.style.display = 'block';
-                }
-
-                killButton.style.display = 'block';
-                spinner.style.display = 'none';
-                killButton.focus();
-
-                if (window.innerWidth <= 768) {
-                    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 1000);
-        }
-
-        function processText(text) {
-            let processedText = text;
-            let dashesRemoved = 0;
-            let paragraphsAdded = 0;
-            let phrasesReplaced = 0;
-
-            const dashReplacement = document.getElementById('dashReplacement').value;
-            const chunkSize = 10000;
-            let resultText = '';
-
-            for (let i = 0; i < text.length; i += chunkSize) {
-                const chunk = text.slice(i, i + chunkSize);
-                const originalDashes = (chunk.match(/—/g) || []).length;
-                dashesRemoved += originalDashes;
-                let chunkProcessed;
-                if (dashReplacement === 'comma') {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, ', ');
-                } else if (dashReplacement === 'period') {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, '. ');
-                } else if (dashReplacement === 'space') {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, ' ');
-                } else {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, (match, offset, string) => {
-                        const before = string.substring(Math.max(0, offset - 50), offset).trim();
-                        const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 50)).trim();
-                        if (after.match(/^[A-Z]/) && before.match(/[.!?]$/)) {
+        for (let i = 0; i < text.length; i += chunkSize) {
+            const chunk = text.slice(i, i + chunkSize);
+            const originalDashes = (chunk.match(/—/g) || []).length;
+            dashesRemoved += originalDashes;
+            let chunkProcessed;
+            if (dashReplacement === 'comma') {
+                chunkProcessed = chunk.replace(/\s*—\s*/g, ', ');
+            } else if (dashReplacement === 'period') {
+                chunkProcessed = chunk.replace(/\s*—\s*/g, '. ');
+            } else if (dashReplacement === 'space') {
+                chunkProcessed = chunk.replace(/\s*—\s*/g, ' ');
+            } else {
+                chunkProcessed = chunk.replace(/\s*—\s*/g, (match, offset, string) => {
+                    const before = string.substring(Math.max(0, offset - 50), offset).trim();
+                    const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 50)).trim();
+                    if (after.match(/^[A-Z]/) && before.match(/[.!?]$/)) {
+                        return ' ';
+                    } else if (after.match(/^[A-Z]/) && !before.match(/[,;:]$/)) {
+                        return '. ';
+                    } else if (after.match(/^(and|but|or|yet|so|for|nor|however|therefore|meanwhile|furthermore|moreover|consequently)\b/i)) {
+                        if (before.match(/[.!?]$/)) {
                             return ' ';
-                        } else if (after.match(/^[A-Z]/) && !before.match(/[,;:]$/)) {
-                            return '. ';
-                        } else if (after.match(/^(and|but|or|yet|so|for|nor|however|therefore|meanwhile|furthermore|moreover|consequently)\b/i)) {
-                            if (before.match(/[.!?]$/)) {
-                                return ' ';
-                            }
-                            return ', ';
-                        } else if (before.match(/\b(said|explained|noted|added|continued|stated|replied|asked)\s*$/i)) {
-                            return ', ';
-                        } else {
-                            return ', ';
                         }
-                    });
-                }
-                resultText += chunkProcessed;
-            }
-            processedText = resultText;
-
-            const aiPhrases = {
-                'in the realm of': 'in',
-                'it is imperative that': 'we must',
-                'leverage the power of': 'use',
-                'at the forefront of': 'leading',
-                'in a comprehensive manner': 'thoroughly',
-                'delve into': 'explore',
-                'facilitate the process of': 'help with',
-                'a myriad of': 'many'
-            };
-
-            for (const [phrase, replacement] of Object.entries(aiPhrases)) {
-                const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
-                const matches = processedText.match(regex);
-                if (matches) {
-                    phrasesReplaced += matches.length;
-                }
-                processedText = processedText.replace(regex, replacement);
-            }
-
-            processedText = processedText
-                .replace(/\s+/g, ' ')
-                .replace(/,\s*,/g, ',')
-                .replace(/;\s*;/g, ';')
-                .replace(/\.\s*\./g, '.')
-                .replace(/\s+([,.;:!?])/g, '$1')
-                .replace(/([,.;:!?])([A-Za-z])/g, '$1 $2')
-                .replace(/([.!?])\s+([a-z])/g, (match, punct, letter) => punct + ' ' + letter.toUpperCase());
-
-            const sentences = processedText.split(/(?<=[.!?])\s+/);
-            let formattedText = '';
-            let currentParagraph = '';
-            let sentenceCount = 0;
-            
-            for (let i = 0; i < sentences.length; i++) {
-                const sentence = sentences[i].trim();
-                if (!sentence) continue;
-                
-                currentParagraph += (currentParagraph ? ' ' : '') + sentence;
-                sentenceCount++;
-                
-                let shouldBreak = false;
-                if (sentence.match(/^(However|Meanwhile|Furthermore|Moreover|In addition|On the other hand|Conversely|Nevertheless|Nonetheless|In contrast|Similarly|Likewise|Therefore|Thus|Consequently|As a result|For example|For instance|In fact|Indeed)/)) {
-                    shouldBreak = true;
-                }
-                if (sentence.match(/^(Later|Earlier|Meanwhile|Subsequently|Previously|Afterward|Before|After|Then|Next|Finally|Eventually|Ultimately|Now|Today|Yesterday|Tomorrow|Recently|Currently)/)) {
-                    shouldBreak = true;
-                }
-                if (sentence.match(/"[^"]*"/) && i < sentences.length - 1 && !sentences[i + 1].match(/^(said|explained|noted|added|continued|stated|replied|asked)/i)) {
-                    shouldBreak = true;
-                }
-                if (sentenceCount >= 4 && !shouldBreak) {
-                    if (i < sentences.length - 1) {
-                        const nextSentence = sentences[i + 1];
-                        if (nextSentence && nextSentence.match(/^[A-Z]/)) {
-                            shouldBreak = true;
-                        }
+                        return ', ';
+                    } else if (before.match(/\b(said|explained|noted|added|continued|stated|replied|asked)\s*$/i)) {
+                        return ', ';
+                    } else {
+                        return ', ';
                     }
-                }
-                if (shouldBreak && currentParagraph.length > 100) {
-                    formattedText += currentParagraph + '\n\n';
-                    currentParagraph = '';
-                    sentenceCount = 0;
-                    paragraphsAdded++;
-                }
+                });
             }
-            
-            if (currentParagraph) {
-                formattedText += currentParagraph;
-            }
-            
-            processedText = formattedText
-                .replace(/\n\n\n+/g, '\n\n')
-                .replace(/^\s+|\s+$/g, '')
-                .replace(/\n\s+/g, '\n');
+            resultText += chunkProcessed;
+        }
+        processedText = resultText;
 
-            return {
-                processedText: processedText,
-                dashesRemoved: dashesRemoved,
-                paragraphsAdded: paragraphsAdded,
-                phrasesReplaced: phrasesReplaced
-            };
+        const aiPhrases = {
+            'in the realm of': 'in',
+            'it is imperative that': 'we must',
+            'leverage the power of': 'use',
+            'at the forefront of': 'leading',
+            'in a comprehensive manner': 'thoroughly',
+            'delve into': 'explore',
+            'facilitate the process of': 'help with',
+            'a myriad of': 'many'
+        };
+
+        for (const [phrase, replacement] of Object.entries(aiPhrases)) {
+            const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+            const matches = processedText.match(regex);
+            if (matches) {
+                phrasesReplaced += matches.length;
+            }
+            processedText = processedText.replace(regex, replacement);
         }
 
-        function copyOutput() {
-            const outputText = document.getElementById('outputText');
+        processedText = processedText
+            .replace(/\s+/g, ' ')
+            .replace(/,\s*,/g, ',')
+            .replace(/;\s*;/g, ';')
+            .replace(/\.\s*\./g, '.')
+            .replace(/\s+([,.;:!?])/g, '$1')
+            .replace(/([,.;:!?])([A-Za-z])/g, '$1 $2')
+            .replace(/([.!?])\s+([a-z])/g, (match, punct, letter) => punct + ' ' + letter.toUpperCase());
+
+        const sentences = processedText.split(/(?<=[.!?])\s+/);
+        let formattedText = '';
+        let currentParagraph = '';
+        let sentenceCount = 0;
+        
+        for (let i = 0; i < sentences.length; i++) {
+            const sentence = sentences[i].trim();
+            if (!sentence) continue;
             
-            if (!outputText.value.trim()) {
-                alert('⚠️ Nothing to copy! Process some text first.');
-                return;
+            currentParagraph += (currentParagraph ? ' ' : '') + sentence;
+            sentenceCount++;
+            
+            let shouldBreak = false;
+            if (sentence.match(/^(However|Meanwhile|Furthermore|Moreover|In addition|On the other hand|Conversely|Nevertheless|Nonetheless|In contrast|Similarly|Likewise|Therefore|Thus|Consequently|As a result|For example|For instance|In fact|Indeed)/)) {
+                shouldBreak = true;
             }
+            if (sentence.match(/^(Later|Earlier|Meanwhile|Subsequently|Previously|Afterward|Before|After|Then|Next|Finally|Eventually|Ultimately|Now|Today|Yesterday|Tomorrow|Recently|Currently)/)) {
+                shouldBreak = true;
+            }
+            if (sentence.match(/"[^"]*"/) && i < sentences.length - 1 && !sentences[i + 1].match(/^(said|explained|noted|added|continued|stated|replied|asked)/i)) {
+                shouldBreak = true;
+            }
+            if (sentenceCount >= 4 && !shouldBreak) {
+                if (i < sentences.length - 1) {
+                    const nextSentence = sentences[i + 1];
+                    if (nextSentence && nextSentence.match(/^[A-Z]/)) {
+                        shouldBreak = true;
+                    }
+                }
+            }
+            if (shouldBreak && currentParagraph.length > 100) {
+                formattedText += currentParagraph + '\n\n';
+                currentParagraph = '';
+                sentenceCount = 0;
+                paragraphsAdded++;
+            }
+        }
+        
+        if (currentParagraph) {
+            formattedText += currentParagraph;
+        }
+        
+        processedText = formattedText
+            .replace(/\n\n\n+/g, '\n\n')
+            .replace(/^\s+|\s+$/g, '')
+            .replace(/\n\s+/g, '\n');
 
-            outputText.select();
-            outputText.setSelectionRange(0, 99999);
+        return {
+            processedText: processedText,
+            dashesRemoved: dashesRemoved,
+            paragraphsAdded: paragraphsAdded,
+            phrasesReplaced: phrasesReplaced
+        };
+    }
 
-            try {
-                document.execCommand('copy');
+    function copyOutput() {
+        const outputText = document.getElementById('outputText');
+        
+        if (!outputText.value.trim()) {
+            alert('⚠️ Nothing to copy! Process some text first.');
+            return;
+        }
+
+        outputText.select();
+        outputText.setSelectionRange(0, 99999);
+
+        try {
+            document.execCommand('copy');
+            const copyButton = document.getElementById('copyButton');
+            const originalText = copyButton.textContent;
+            copyButton.textContent = '✅ COPIED!';
+            copyButton.style.background = 'rgba(0, 255, 65, 0.2)';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+                copyButton.style.background = '';
+            }, 2000);
+        } catch (err) {
+            navigator.clipboard.writeText(outputText.value).then(() => {
                 const copyButton = document.getElementById('copyButton');
                 const originalText = copyButton.textContent;
                 copyButton.textContent = '✅ COPIED!';
-                copyButton.style.background = 'rgba(0, 255, 65, 0.2)';
                 setTimeout(() => {
                     copyButton.textContent = originalText;
-                    copyButton.style.background = '';
                 }, 2000);
-            } catch (err) {
-                navigator.clipboard.writeText(outputText.value).then(() => {
-                    const copyButton = document.getElementById('copyButton');
-                    const originalText = copyButton.textContent;
-                    copyButton.textContent = '✅ COPIED!';
-                    setTimeout(() => {
-                        copyButton.textContent = originalText;
-                    }, 2000);
-                }).catch(() => {
-                    alert('❌ Copy failed. Please select and copy manually.');
-                });
-            }
+            }).catch(() => {
+                alert('❌ Copy failed. Please select and copy manually.');
+            });
         }
+    }
 
-        function undoChanges() {
-            if (originalText) {
-                document.getElementById('outputText').value = originalText;
-                document.getElementById('results').style.display = 'none';
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('inputText').value = '';
-            document.getElementById('outputText').value = '';
+    function undoChanges() {
+        if (originalText) {
+            document.getElementById('outputText').value = originalText;
             document.getElementById('results').style.display = 'none';
-            originalText = '';
         }
+    }
 
-        document.getElementById('inputText').addEventListener('input', function() {
-            const text = this.value;
-            const dashCount = (text.match(/—/g) || []).length;
-            
-            if (dashCount > 0) {
-                document.getElementById('changesText').innerHTML = `
-                    🎯 Found <strong>${dashCount}</strong> em dash${dashCount === 1 ? '' : 'es'} ready to eliminate!
-                `;
-                document.getElementById('results').style.display = 'block';
-            } else if (text.trim()) {
-                document.getElementById('changesText').innerHTML = `
-                    ✅ No em dashes detected. Your text looks clean!
-                `;
-                document.getElementById('results').style.display = 'block';
-            } else {
-                document.getElementById('results').style.display = 'none';
-            }
-        });
+    function resetForm() {
+        window.location.reload();
+    }
 
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                killDashes();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
-                e.preventDefault();
-                copyOutput();
-            }
-        });
-
-        function trackUsage(action, value) {
-            console.log(`Action: ${action}, Value: ${value}`);
+    document.getElementById('inputText').addEventListener('input', function() {
+        const text = this.value;
+        const dashCount = (text.match(/—/g) || []).length;
+        
+        if (dashCount > 0) {
+            document.getElementById('changesText').innerHTML = `
+                🎯 Found <strong>${dashCount}</strong> em dash${dashCount === 1 ? '' : 'es'} ready to eliminate!
+            `;
+            document.getElementById('results').style.display = 'block';
+        } else if (text.trim()) {
+            document.getElementById('changesText').innerHTML = `
+                ✅ No em dashes detected. Your text looks clean!
+            `;
+            document.getElementById('results').style.display = 'block';
+        } else {
+            document.getElementById('results').style.display = 'none';
         }
-    </script>
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            killDashes();
+        }
+        if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
+            e.preventDefault();
+            copyOutput();
+        }
+    });
+
+    function trackUsage(action, value) {
+        console.log(`Action: ${action}, Value: ${value}`);
+    }
+</script>
 </body>
 </html>
