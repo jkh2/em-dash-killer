@@ -357,6 +357,9 @@
             border-radius: 8px;
             margin-bottom: 20px;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .donation-actions {
@@ -545,7 +548,16 @@
             <div class="panel">
                 <h2 class="panel-title">⚡ SUPPORT THE MISSION</h2>
                 <p class="donation-text">Keep EM DASH KILLER free for everyone. Your donations help cover hosting, development, and new features.</p>
-                <div id="cost-graph"></div>
+                <div id="cost-graph">
+                    <div style="padding: 20px; text-align: center; color: #b3b3b3; font-family: 'Courier New', monospace;">
+                        <div style="margin-bottom: 15px; color: #00ffff; font-size: 14px;">💰 FUNDING PROGRESS</div>
+                        <div style="margin-bottom: 8px;">Hosting: $20/$25 (80%)</div>
+                        <div style="margin-bottom: 8px;">Domain: $15/$15 (100%)</div>
+                        <div style="margin-bottom: 8px;">Development: $25/$40 (63%)</div>
+                        <div style="margin-bottom: 8px;">Features: $10/$30 (33%)</div>
+                        <div style="margin-top: 15px; color: #ff0080; font-size: 12px;">$70/$110 total funded</div>
+                    </div>
+                </div>
                 <div class="donation-actions">
                     <a href="https://cash.app/$Americanadventurer" class="donation-button" target="_blank">
                         💸 DONATE VIA CASH APP
@@ -566,7 +578,6 @@
         </footer>
     </div>
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
         // Global stats
         let totalProcessed = parseInt(localStorage.getItem('totalProcessed') || '0');
@@ -585,7 +596,7 @@
             localStorage.setItem('totalDashes', totalDashes.toString());
         }
 
-        // Initialize stats
+        // Initialize stats on page load
         updateStats();
 
         // Main processing function
@@ -607,7 +618,7 @@
             setTimeout(() => {
                 const result = processText(inputText);
                 
-                // Display with preserved formatting
+                // Display formatted text
                 document.getElementById('outputText').value = result.processedText;
                 
                 // Update stats
@@ -660,33 +671,27 @@
 
             // Count original em dashes
             const originalDashes = (text.match(/—/g) || []).length;
+            dashesRemoved = originalDashes;
             
             // Step 1: Replace em dashes with contextually appropriate punctuation
             processedText = processedText.replace(/\s*—\s*/g, (match, offset, string) => {
-                dashesRemoved++;
-                
                 // Get context around the dash
                 const before = string.substring(Math.max(0, offset - 50), offset).trim();
                 const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 50)).trim();
                 
                 // Smart replacement logic
                 if (after.match(/^[A-Z]/) && before.match(/[.!?]$/)) {
-                    // After sentence ending, start new sentence
                     return ' ';
                 } else if (after.match(/^[A-Z]/) && !before.match(/[,;:]$/)) {
-                    // If next part starts with capital and no comma before, likely new sentence
                     return '. ';
                 } else if (after.match(/^(and|but|or|yet|so|for|nor|however|therefore|meanwhile|furthermore|moreover|consequently)\b/i)) {
-                    // Before conjunctive words
                     if (before.match(/[.!?]$/)) {
                         return ' ';
                     }
                     return ', ';
                 } else if (before.match(/\b(said|explained|noted|added|continued|stated|replied|asked)\s*$/i)) {
-                    // After dialogue tags
                     return ', ';
                 } else {
-                    // Default to comma for most cases
                     return ', ';
                 }
             });
@@ -734,7 +739,6 @@
                 
                 // Break after every 3-5 sentences if no natural break found
                 if (sentenceCount >= 4 && !shouldBreak) {
-                    // Look for a good breaking point
                     if (i < sentences.length - 1) {
                         const nextSentence = sentences[i + 1];
                         if (nextSentence && nextSentence.match(/^[A-Z]/)) {
@@ -759,13 +763,13 @@
             
             // Final cleanup
             processedText = formattedText
-                .replace(/\n\n\n+/g, '\n\n')  // Remove excessive line breaks
-                .replace(/^\s+|\s+$/g, '')     // Trim start and end
-                .replace(/\n\s+/g, '\n');       // Clean up indentation
+                .replace(/\n\n\n+/g, '\n\n')
+                .replace(/^\s+|\s+$/g, '')
+                .replace(/\n\s+/g, '\n');
 
             return {
                 processedText: processedText,
-                dashesRemoved: originalDashes,
+                dashesRemoved: dashesRemoved,
                 paragraphsAdded: paragraphsAdded
             };
         }
@@ -798,7 +802,12 @@
                 
             } catch (err) {
                 navigator.clipboard.writeText(outputText.value).then(() => {
-                    alert('✅ Text copied to clipboard!');
+                    const copyButton = document.getElementById('copyButton');
+                    const originalText = copyButton.textContent;
+                    copyButton.textContent = '✅ COPIED!';
+                    setTimeout(() => {
+                        copyButton.textContent = originalText;
+                    }, 2000);
                 }).catch(() => {
                     alert('❌ Copy failed. Please select and copy manually.');
                 });
@@ -838,123 +847,7 @@
             }
         });
 
-        // Initialize cost visualization
-        window.addEventListener('load', function() {
-            if (typeof d3 !== 'undefined') {
-                initializeCostGraph();
-            } else {
-                // Fallback if D3 fails to load
-                document.getElementById('cost-graph').innerHTML = `
-                    <div style="padding: 20px; text-align: center; color: #b3b3b3; font-family: 'Courier New', monospace;">
-                        <div style="margin-bottom: 15px; color: #00ffff; font-size: 14px;">💰 FUNDING PROGRESS</div>
-                        <div style="margin-bottom: 8px;">Hosting: $20/$25 (80%)</div>
-                        <div style="margin-bottom: 8px;">Domain: $15/$15 (100%)</div>
-                        <div style="margin-bottom: 8px;">Development: $25/$40 (63%)</div>
-                        <div style="margin-bottom: 8px;">Features: $10/$30 (33%)</div>
-                        <div style="margin-top: 15px; color: #ff0080; font-size: 12px;">$70/$110 total funded</div>
-                    </div>
-                `;
-            }
-        });
-
-        function initializeCostGraph() {
-            const costWidth = Math.min(window.innerWidth - 80, 800);
-            const costHeight = 180;
-            const margin = { top: 20, right: 20, bottom: 40, left: 60 };
-
-            const costSvg = d3.select("#cost-graph")
-                .append("svg")
-                .attr("width", "100%")
-                .attr("height", costHeight)
-                .attr("viewBox", `0 0 ${costWidth} ${costHeight}`)
-                .attr("preserveAspectRatio", "xMidYMid meet")
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
-
-            const costData = [
-                { name: "Hosting", cost: 25, funded: 20 },
-                { name: "Domain", cost: 15, funded: 15 },
-                { name: "Development", cost: 40, funded: 25 },
-                { name: "Features", cost: 30, funded: 10 }
-            ];
-
-            const x = d3.scaleBand()
-                .domain(costData.map(d => d.name))
-                .range([0, costWidth - margin.left - margin.right])
-                .padding(0.2);
-
-            const y = d3.scaleLinear()
-                .domain([0, d3.max(costData, d => d.cost) * 1.1])
-                .range([costHeight - margin.top - margin.bottom, 0]);
-
-            // X Axis
-            costSvg.append("g")
-                .attr("transform", `translate(0,${costHeight - margin.top - margin.bottom})`)
-                .call(d3.axisBottom(x))
-                .selectAll("text")
-                .style("font-size", "11px")
-                .style("fill", "#b3b3b3")
-                .style("font-family", "'Courier New', monospace");
-
-            // Y Axis
-            costSvg.append("g")
-                .call(d3.axisLeft(y).ticks(4).tickFormat(d => `${d}`))
-                .selectAll("text")
-                .style("font-size", "11px")
-                .style("fill", "#b3b3b3")
-                .style("font-family", "'Courier New', monospace");
-
-            // Style axis lines
-            costSvg.selectAll(".domain")
-                .style("stroke", "#333");
-            
-            costSvg.selectAll(".tick line")
-                .style("stroke", "#333");
-
-            // Funded bars
-            const bars = costSvg.selectAll(".cost-bar")
-                .data(costData)
-                .enter().append("rect")
-                .attr("class", "cost-bar")
-                .attr("x", d => x(d.name))
-                .attr("y", d => y(d.funded))
-                .attr("width", x.bandwidth())
-                .attr("height", d => costHeight - margin.top - margin.bottom - y(d.funded))
-                .attr("fill", d => d.funded >= d.cost ? "#00ff41" : "#ff0080")
-                .attr("opacity", 0.8);
-
-            // Target lines
-            costSvg.selectAll(".target-line")
-                .data(costData)
-                .enter().append("line")
-                .attr("class", "target-line")
-                .attr("x1", d => x(d.name))
-                .attr("x2", d => x(d.name) + x.bandwidth())
-                .attr("y1", d => y(d.cost))
-                .attr("y2", d => y(d.cost))
-                .style("stroke", "#00ffff")
-                .style("stroke-width", 2)
-                .style("stroke-dasharray", "4,4");
-
-            // Labels
-            costSvg.selectAll(".cost-bar-label")
-                .data(costData)
-                .enter().append("text")
-                .attr("class", "cost-bar-label")
-                .attr("x", d => x(d.name) + x.bandwidth() / 2)
-                .attr("y", d => y(d.funded) - 8)
-                .attr("text-anchor", "middle")
-                .style("fill", "#b3b3b3")
-                .style("font-size", "10px")
-                .style("font-family", "'Courier New', monospace")
-                .text(d => `${d.funded}/${d.cost}`);
-
-            // Animate bars on load
-            bars.attr("height", 0)
-                .attr("y", costHeight - margin.top - margin.bottom)
-                .transition()
-                .duration(1000)
-                .delay((d, i) => i * 200)
-                .attr("y", d => y(d.funded))
-                .attr("height", d => costHeight - margin.top - margin.bottom - y(d.funded));
+        // Analytics placeholder
+        function trackUsage(action, value) {
+            console.log(`Action: ${action}, Value: ${value}`);
         }
