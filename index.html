@@ -685,23 +685,26 @@
             // Count original em dashes
             const originalDashes = (text.match(/—/g) || []).length;
             
-            // Phase 1: Preserve existing paragraph structure
+            // Phase 1: Preserve existing paragraph structure or process as single block
             const paragraphs = text.split(/\n\s*\n|\r\n\s*\r\n/);
             
             if (paragraphs.length > 1) {
                 // Process each paragraph separately and rejoin
-                processedText = paragraphs.map(paragraph => {
+                const processedParagraphs = paragraphs.map(paragraph => {
                     if (paragraph.trim()) {
-                        return processParagraph(paragraph.trim());
+                        return processSingleParagraph(paragraph.trim());
                     }
                     return '';
-                }).filter(p => p).join('\n\n');
+                }).filter(p => p);
                 
+                processedText = processedParagraphs.join('\n\n');
                 dashesRemoved = originalDashes;
             } else {
-                // Single paragraph or no breaks - process normally but add intelligent breaks
-                processedText = processParagraph(text);
-                processedText = addIntelligentParagraphBreaks(processedText);
+                // Single paragraph - process and optionally add breaks
+                processedText = processSingleParagraph(text);
+                if (processedText.length > 400) {
+                    processedText = addIntelligentParagraphBreaks(processedText);
+                }
                 dashesRemoved = originalDashes;
             }
 
@@ -711,14 +714,53 @@
             };
         }
 
-        // Process a single paragraph while maintaining flow
-        function processParagraph(text) {
-            // Replace em dashes while preserving natural groupings
+        // Process a single paragraph with dash removal and cleanup
+        function processSingleParagraph(text) {
+            // Step 1: Replace em dashes intelligently
             const dashSegments = text.split(/\s*—\s*/);
+            let result = '';
+            
             if (dashSegments.length > 1) {
-                return intelligentlyReconnect(dashSegments);
+                result = intelligentlyReconnectSegments(dashSegments);
+            } else {
+                result = text;
             }
-            return text;
+            
+            // Step 2: Basic cleanup
+            result = basicCleanup(result);
+            
+            return result;
+        }
+
+        // Intelligently reconnect segments that were separated by em dashes
+        function intelligentlyReconnectSegments(segments) {
+            if (segments.length < 2) return segments[0] || '';
+            
+            let result = segments[0].trim();
+            
+            for (let i = 1; i < segments.length; i++) {
+                const currentSegment = segments[i].trim();
+                if (!currentSegment) continue;
+                
+                const currentStart = currentSegment.slice(0, 20).toLowerCase();
+                
+                // Determine connector based on content
+                let connector = ', ';
+                
+                // Use period for major breaks
+                if (currentSegment.length > 60 && /^[A-Z]/.test(currentSegment)) {
+                    connector = '. ';
+                    result += connector + currentSegment;
+                } else if (/^(and|but|or|yet|so)\s+/i.test(currentSegment) && currentSegment.length > 40) {
+                    connector = '. ';
+                    result += connector + currentSegment.charAt(0).toUpperCase() + currentSegment.slice(1);
+                } else {
+                    // Default comma connection
+                    result += connector + currentSegment;
+                }
+            }
+            
+            return result;
         }
 
         // Add intelligent paragraph breaks to long text
