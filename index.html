@@ -1,1077 +1,674 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EM DASH KILLER - Transform AI Text Into Natural Writing</title>
-    <meta name="description" content="Remove em dashes and AI-generated phrases from text to make it sound natural and professional. Instant, private text transformation tool.">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #1a1a2e;
-            --bg-tertiary: #16213e;
-            --neon-cyan: #00ffff;
-            --neon-pink: #ff0080;
-            --neon-green: #00ff41;
-            --text-primary: #ffffff;
-            --text-secondary: #d1d1d1;
-            --text-muted: #999;
-            --border: #333;
-            --success: #00ff41;
-            --warning: #ffaa00;
-        }
-
-        body {
-            font-family: 'Courier New', monospace;
-            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-        }
-
-        .logo-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .logo-badge {
-            position: relative;
-            width: 320px;
-            height: 200px;
-            margin-bottom: 15px;
-            filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.4)) drop-shadow(0 0 40px rgba(255, 0, 128, 0.3));
-            transition: all 0.5s ease;
-        }
-
-        .logo-badge:hover {
-            filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(255, 0, 128, 0.6));
-            transform: scale(1.03);
-        }
-
-        .badge-frame {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border: 3px solid;
-            border-image: linear-gradient(45deg, #00ffff, #0088ff, #00ffff) 1;
-            border-radius: 20px;
-            background: linear-gradient(135deg, rgba(0, 20, 40, 0.9) 0%, rgba(20, 0, 40, 0.9) 100%);
-            box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1);
-        }
-
-        .badge-frame::before {
-            content: '';
-            position: absolute;
-            top: -6px;
-            left: -6px;
-            right: -6px;
-            bottom: -6px;
-            background: linear-gradient(45deg, #00ffff, #0088ff, #00ffff);
-            border-radius: 24px;
-            z-index: -1;
-        }
-
-        .logo-text-em {
-            position: absolute;
-            top: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Courier New', monospace;
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: #00ffff;
-            text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff, 0 0 45px #0088ff;
-            letter-spacing: 0.2em;
-        }
-
-        .dash-visual {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .play-arrow {
-            width: 0;
-            height: 0;
-            border-left: 20px solid #ff0080;
-            border-top: 12px solid transparent;
-            border-bottom: 12px solid transparent;
-            filter: drop-shadow(0 0 10px #ff0080);
-        }
-
-        .dash-line {
-            width: 120px;
-            height: 8px;
-            background: linear-gradient(90deg, #ff0080, #ff44aa);
-            border-radius: 4px;
-            border: 2px solid #ff0080;
-            box-shadow: 0 0 15px #ff0080, inset 0 0 10px rgba(255, 255, 255, 0.2);
-        }
-
-        .logo-text-killer {
-            position: absolute;
-            bottom: 25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Courier New', monospace;
-            font-size: 2.8rem;
-            font-weight: bold;
-            color: #ff0080;
-            text-shadow: 0 0 15px #ff0080, 0 0 30px #ff0080, 0 0 45px #ff44aa;
-            letter-spacing: 0.15em;
-        }
-
-        .tagline {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-        }
-
-        .stat {
-            text-align: center;
-            padding: 15px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid var(--neon-cyan);
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--neon-cyan);
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .panel {
-            background: rgba(26, 26, 46, 0.8);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 25px;
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
-        }
-
-        .panel-title {
-            font-size: 1.5rem;
-            color: var(--neon-cyan);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .textarea-label {
-            display: block;
-            color: var(--neon-cyan);
-            font-size: 1rem;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        textarea {
-            width: 100%;
-            height: 300px;
-            background: var(--bg-primary);
-            border: 2px solid var(--border);
-            border-radius: 8px;
-            padding: 15px;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 1rem;
-            resize: vertical;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
-
-        textarea:focus {
-            outline: none;
-            border-color: var(--neon-cyan);
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-        }
-
-        .output-text {
-            width: 100%;
-            min-height: 300px;
-            background: rgba(26, 26, 46, 0.9);
-            border: 2px solid var(--neon-green);
-            border-radius: 8px;
-            padding: 20px;
-            color: var(--text-primary);
-            font-family: inherit;
-            font-size: 1rem;
-            line-height: 1.4;
-            white-space: pre-wrap;
-            overflow-y: auto;
-        }
-
-        .output-text p {
-            margin: 0 0 1em;
-            position: relative;
-        }
-
-        .output-text p:not(:last-child)::after {
-            content: '';
-            display: block;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink));
-            opacity: 0.3;
-            margin: 1em 0;
-        }
-
-        .settings {
-            margin-bottom: 15px;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .settings label {
-            color: var(--text-secondary);
-            font-size: 1rem;
-        }
-
-        .settings select {
-            background: var(--bg-primary);
-            border: 2px solid var(--border);
-            color: var(--text-primary);
-            padding: 8px;
-            border-radius: 6px;
-            font-family: inherit;
-        }
-
-        .action-section {
-            display: flex;
-            justify-content: center;
-            margin: 40px 0;
-            position: relative;
-        }
-
-        .kill-button {
-            background: linear-gradient(45deg, var(--neon-pink), #ff4444);
-            border: none;
-            padding: 20px 50px;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: white;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 0 30px rgba(255, 0, 128, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .kill-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s;
-        }
-
-        .kill-button:hover::before {
-            left: 100%;
-        }
-
-        .kill-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 40px rgba(255, 0, 128, 0.8);
-        }
-
-        .kill-button:active {
-            transform: translateY(0);
-        }
-
-        .spinner {
-            display: none;
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--neon-cyan);
-            border-top: 4px solid var(--neon-pink);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .copy-button {
-            background: var(--bg-tertiary);
-            border: 2px solid var(--neon-green);
-            color: var(--neon-green);
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 15px;
-            font-family: inherit;
-        }
-
-        .copy-button:hover {
-            background: rgba(0, 255, 65, 0.1);
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
-        }
-
-        .output-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .results {
-            background: rgba(0, 255, 65, 0.1);
-            border: 1px solid var(--neon-green);
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .changes-count {
-            font-size: 1.2rem;
-            color: var(--neon-green);
-            font-weight: bold;
-        }
-
-        .donation-section {
-            margin: 40px 0;
-        }
-
-        .donation-text {
-            color: var(--text-secondary);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        #cost-graph {
-            width: 100%;
-            background: rgba(10, 10, 15, 0.5);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            background: var(--bg-primary);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-
-        .progress-fill {
-            height: 20px;
-            background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
-            transition: width 0.5s ease;
-        }
-
-        .progress-label {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-        }
-
-        .donation-actions {
-            text-align: center;
-        }
-
-        .donation-button {
-            display: inline-block;
-            padding: 15px 30px;
-            background: linear-gradient(45deg, var(--neon-green), #00cc33);
-            color: var(--bg-primary);
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
-            border: none;
-            cursor: pointer;
-        }
-
-        .donation-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.6);
-            background: linear-gradient(45deg, #00ff41, #00aa2a);
-        }
-
-        .donation-note {
-            margin-top: 15px;
-            color: var(--neon-green);
-            font-size: 0.9rem;
-            font-style: italic;
-        }
-
-        footer {
-            text-align: center;
-            padding: 30px 0;
-            border-top: 1px solid var(--border);
-            color: var(--text-muted);
-        }
-
-        .footer-links {
-            margin-top: 15px;
-        }
-
-        .footer-links a {
-            color: var(--neon-cyan);
-            text-decoration: none;
-            margin: 0 15px;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: var(--neon-pink);
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-
-            .logo-badge {
-                width: 280px;
-                height: 180px;
-            }
-
-            .logo-text-em {
-                font-size: 1.8rem;
-                top: 20px;
-            }
-
-            .logo-text-killer {
-                font-size: 2.2rem;
-                bottom: 20px;
-            }
-
-            .dash-visual {
-                top: 65px;
-            }
-
-            .dash-line {
-                width: 100px;
-                height: 6px;
-            }
-
-            .play-arrow {
-                border-left-width: 16px;
-                border-top-width: 10px;
-                border-bottom-width: 10px;
-            }
-
-            .stats {
-                gap: 15px;
-            }
-
-            .kill-button {
-                padding: 15px 30px;
-                font-size: 1.2rem;
-            }
-
-            .container {
-                padding: 15px;
-            }
-
-            .donation-button {
-                padding: 12px 25px;
-                font-size: 1rem;
-            }
-        }
-
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
-            50% { box-shadow: 0 0 30px rgba(0, 255, 255, 0.6); }
-        }
-
-        .panel:hover {
-            animation: glow 2s infinite;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EM DASH KILLER - Transform AI Text Into Natural Writing</title>
+  <meta name="description" content="Remove em dashes and AI-generated phrases from text to make it sound natural and professional. Instant, private text transformation tool." />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #1a1a2e;
+      --bg-tertiary: #16213e;
+      --neon-cyan: #00ffff;
+      --neon-pink: #ff0080;
+      --neon-green: #00ff41;
+      --text-primary: #ffffff;
+      --text-secondary: #d1d1d1;
+      --text-muted: #9aa0a6;
+      --border: #333;
+      --success: #00ff41;
+      --warning: #ffaa00;
+      --error: #ff3b6b;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji';
+      background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; min-height: 100vh; }
+    header { text-align: center; margin-bottom: 40px; position: relative; }
+
+    .logo-container { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+    .logo-badge { position: relative; width: 320px; height: 200px; margin-bottom: 15px; filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.4)) drop-shadow(0 0 40px rgba(255, 0, 128, 0.3)); transition: all 0.5s ease; }
+    .logo-badge:hover { filter: drop-shadow(0 0 30px rgba(0, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(255, 0, 128, 0.6)); transform: scale(1.03); }
+    .badge-frame { position: absolute; inset: 0; border: 3px solid; border-image: linear-gradient(45deg, #00ffff, #0088ff, #00ffff) 1; border-radius: 20px; background: linear-gradient(135deg, rgba(0, 20, 40, 0.9) 0%, rgba(20, 0, 40, 0.9) 100%); box-shadow: inset 0 0 30px rgba(0, 255, 255, 0.1); }
+    .badge-frame::before { content: ""; position: absolute; inset: -6px; background: linear-gradient(45deg, #00ffff, #0088ff, #00ffff); border-radius: 24px; z-index: -1; }
+    .logo-text-em { position: absolute; top: 25px; left: 50%; transform: translateX(-50%); font-size: 2.2rem; font-weight: 800; color: #00ffff; text-shadow: 0 0 15px #00ffff, 0 0 30px #00ffff, 0 0 45px #0088ff; letter-spacing: 0.2em; }
+    .dash-visual { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 15px; }
+    .play-arrow { width: 0; height: 0; border-left: 20px solid #ff0080; border-top: 12px solid transparent; border-bottom: 12px solid transparent; filter: drop-shadow(0 0 10px #ff0080); }
+    .dash-line { width: 120px; height: 8px; background: linear-gradient(90deg, #ff0080, #ff44aa); border-radius: 4px; border: 2px solid #ff0080; box-shadow: 0 0 15px #ff0080, inset 0 0 10px rgba(255, 255, 255, 0.2); }
+    .logo-text-killer { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); font-size: 2.8rem; font-weight: 800; color: #ff0080; text-shadow: 0 0 15px #ff0080, 0 0 30px #ff0080, 0 0 45px #ff44aa; letter-spacing: 0.15em; }
+
+    .tagline { font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 20px; }
+    .stats { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; flex-wrap: wrap; }
+    .stat { text-align: center; padding: 15px; background: rgba(0, 255, 255, 0.1); border: 1px solid var(--neon-cyan); border-radius: 8px; box-shadow: 0 0 15px rgba(0, 255, 255, 0.3); }
+    .stat-number { font-size: 2rem; font-weight: 800; color: var(--neon-cyan); display: block; }
+    .stat-label { font-size: 0.9rem; color: var(--text-secondary); }
+
+    .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+    .panel { background: rgba(26, 26, 46, 0.8); border: 1px solid var(--border); border-radius: 12px; padding: 25px; backdrop-filter: blur(10px); position: relative; overflow: hidden; }
+    .panel::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink)); }
+    .panel-title { font-size: 1.5rem; color: var(--neon-cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+    .textarea-label { display: block; color: var(--neon-cyan); font-size: 1rem; margin-bottom: 10px; font-weight: 700; }
+    textarea { width: 100%; height: 300px; background: var(--bg-primary); border: 2px solid var(--border); border-radius: 8px; padding: 15px; color: var(--text-primary); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.95rem; resize: vertical; transition: border-color 0.3s ease, box-shadow 0.3s ease; white-space: pre-wrap; word-wrap: break-word; }
+    textarea:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 20px rgba(0, 255, 255, 0.3); }
+
+    /* Output: plain text */
+    .output-text { width: 100%; min-height: 300px; background: rgba(26, 26, 46, 0.9); border: 2px solid var(--neon-green); border-radius: 8px; padding: 20px; color: var(--text-primary); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; overflow-y: auto; }
+
+    /* Output: rich paragraphs */
+    .output-rich { width: 100%; min-height: 300px; background: rgba(26, 26, 46, 0.9); border: 2px solid var(--neon-green); border-radius: 8px; padding: 20px; color: var(--text-primary); font-size: 1rem; line-height: 1.7; overflow-y: auto; }
+    .output-rich p { margin: 0 0 1em; }
+    .output-rich p:not(:last-child)::after { content: ""; display: block; width: 100%; height: 1px; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink)); opacity: 0.25; margin: 1em 0 0.2em; }
+
+    .settings { margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .settings label { color: var(--text-secondary); font-size: 1rem; }
+    .settings select, .settings input[type="checkbox"] { background: var(--bg-primary); border: 2px solid var(--border); color: var(--text-primary); padding: 8px; border-radius: 6px; font-family: inherit; }
+    .settings .inline { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; }
+
+    .action-section { display: flex; justify-content: center; margin: 40px 0; position: relative; }
+    .kill-button { background: linear-gradient(45deg, var(--neon-pink), #ff4444); border: none; padding: 20px 50px; font-size: 1.5rem; font-weight: 800; color: white; border-radius: 12px; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 30px rgba(255, 0, 128, 0.5); position: relative; overflow: hidden; }
+    .kill-button::before { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent); transition: left 0.5s; }
+    .kill-button:hover::before { left: 100%; }
+    .kill-button:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(255, 0, 128, 0.8); }
+    .kill-button:active { transform: translateY(0); }
+
+    .spinner { display: none; width: 40px; height: 40px; border: 4px solid var(--neon-cyan); border-top: 4px solid var(--neon-pink); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .copy-button { background: var(--bg-tertiary); border: 2px solid var(--neon-green); color: var(--neon-green); padding: 10px 20px; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; margin-top: 15px; font-family: inherit; }
+    .copy-button:hover { background: rgba(0, 255, 65, 0.1); box-shadow: 0 0 15px rgba(0, 255, 65, 0.3); }
+    .output-actions { display: flex; gap: 10px; margin-top: 15px; justify-content: center; flex-wrap: wrap; }
+
+    .results { background: rgba(0, 255, 65, 0.1); border: 1px solid var(--neon-green); border-radius: 8px; padding: 15px; margin-top: 20px; text-align: center; }
+    .changes-count { font-size: 1.1rem; color: var(--neon-green); font-weight: 700; }
+
+    .donation-section { margin: 40px 0; }
+    .donation-text { color: var(--text-secondary); margin-bottom: 20px; text-align: center; }
+    #cost-graph { width: 100%; background: rgba(10, 10, 15, 0.5); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+    .progress-bar { width: 100%; background: var(--bg-primary); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
+    .progress-fill { height: 20px; background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green)); transition: width 0.5s ease; }
+    .progress-label { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px; }
+    .donation-actions { text-align: center; }
+    .donation-button { display: inline-block; padding: 15px 30px; background: linear-gradient(45deg, var(--neon-green), #00cc33); color: var(--bg-primary); text-decoration: none; border-radius: 8px; font-size: 1.1rem; font-weight: 800; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(0, 255, 65, 0.3); border: none; cursor: pointer; }
+    .donation-button:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(0, 255, 65, 0.6); background: linear-gradient(45deg, #00ff41, #00aa2a); }
+    .donation-note { margin-top: 15px; color: var(--neon-green); font-size: 0.9rem; font-style: italic; }
+
+    footer { text-align: center; padding: 30px 0; border-top: 1px solid var(--border); color: var(--text-muted); }
+    .footer-links { margin-top: 15px; }
+    .footer-links a { color: var(--neon-cyan); text-decoration: none; margin: 0 15px; transition: color 0.3s ease; }
+    .footer-links a:hover { color: var(--neon-pink); }
+
+    /* Diagnostics */
+    .diagnostics { margin-top: 24px; background: rgba(255, 59, 107, 0.08); border: 1px solid rgba(255, 59, 107, 0.35); color: #ffd5dd; border-radius: 10px; padding: 16px; }
+    .diagnostics h3 { margin-bottom: 8px; color: #ff8aa5; font-weight: 800; }
+    .diagnostics pre { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 8px; }
+    .diagnostics .hint { margin-top: 10px; font-size: 0.95rem; color: #ffc2d0; }
+
+    /* Test suite */
+    .test-panel { margin-top: 30px; }
+    .test-panel .test-results { background: rgba(10, 10, 15, 0.5); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-top: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .test-pass { color: #8ef59b; }
+    .test-fail { color: #ff8aa5; }
+
+    /* Wallet (optional) */
+    .wallet-status { display:inline-flex; align-items:center; gap:8px; font-weight:700; color: var(--text-secondary); }
+    .badge { display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.8rem; border: 1px solid var(--border); }
+    .badge.ok { color: #8ef59b; border-color: #3a7a45; }
+    .badge.warn { color: #ffd166; border-color: #8a6d1a; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo-container">
-                <div class="logo-badge">
-                    <div class="badge-frame"></div>
-                    <div class="logo-text-em">EM DASH</div>
-                    <div class="dash-visual">
-                        <div class="play-arrow"></div>
-                        <div class="dash-line"></div>
-                    </div>
-                    <div class="logo-text-killer">KILLER</div>
-                </div>
-            </div>
-            <p class="tagline">Transform AI-Generated Text Into Natural, Professional Writing<br>
-            A free service provided by Sentinel AI Systems</p>
-            
-            <div class="stats">
-                <div class="stat">
-                    <span class="stat-number" id="totalProcessed">0</span>
-                    <span class="stat-label">Texts Processed</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number" id="totalDashes">0</span>
-                    <span class="stat-label">Dashes Eliminated</span>
-                </div>
-                <div class="stat">
-                    <span class="stat-number" id="credibilityBoost">0%</span>
-                    <span class="stat-label">Credibility Boost</span>
-                </div>
-            </div>
-        </header>
-
-        <div class="main-content">
-            <div class="panel">
-                <h2 class="panel-title">📝 INPUT: Your AI Text</h2>
-                <div class="settings">
-                    <label for="dashReplacement">Em Dash Replacement:</label>
-                    <select id="dashReplacement">
-                        <option value="smart">Smart Context</option>
-                        <option value="comma">Comma (,)</option>
-                        <option value="period">Period (.)</option>
-                        <option value="space">Space</option>
-                    </select>
-                </div>
-                <label for="inputText" class="textarea-label">Paste your AI-generated text here:</label>
-                <textarea 
-                    id="inputText" 
-                    placeholder="Paste your AI-generated text here — the text that sounds robotic because it's full of em dashes — and watch the magic happen..."
-                    aria-label="Input text for processing"
-                ></textarea>
-            </div>
-
-            <div class="panel">
-                <h2 class="panel-title">✨ OUTPUT: Natural Text</h2>
-                <label for="outputText" class="textarea-label">Your transformed text:</label>
-                <pre id="outputText" class="output-text" aria-label="Processed output text"></pre>
-                <div class="output-actions">
-                    <button class="copy-button" id="copyButton" onclick="copyOutput()" aria-label="Copy processed text">📋 COPY CLEAN TEXT</button>
-                    <button class="copy-button" id="downloadTextButton" onclick="downloadOutput()" aria-label="Download processed text">💾 DOWNLOAD AS TEXT</button>
-                    <button class="copy-button" id="downloadDocxButton" onclick="downloadDocx()" aria-label="Download processed text as DOCX">📄 DOWNLOAD AS DOCX</button>
-                    <button class="copy-button" id="undoButton" onclick="undoChanges()" aria-label="Undo changes">🔄 UNDO</button>
-                    <button class="copy-button" id="resetButton" onclick="resetForm()" aria-label="Reset form">🗑️ RESET</button>
-                </div>
-            </div>
+  <div class="container">
+    <header>
+      <div class="logo-container">
+        <div class="logo-badge">
+          <div class="badge-frame"></div>
+          <div class="logo-text-em">EM DASH</div>
+          <div class="dash-visual">
+            <div class="play-arrow"></div>
+            <div class="dash-line"></div>
+          </div>
+          <div class="logo-text-killer">KILLER</div>
         </div>
+      </div>
+      <p class="tagline">Transform AI-Generated Text Into Natural, Professional Writing<br />A free service provided by Sentinel AI Systems</p>
 
-        <div class="action-section">
-            <button class="kill-button" id="killButton" onclick="killDashes()" aria-label="Process text to remove em dashes">
-                ⚡ KILL EM DASHES ⚡
-            </button>
-            <div class="spinner" id="spinner"></div>
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-number" id="totalProcessed">0</span>
+          <span class="stat-label">Texts Processed</span>
         </div>
-
-        <div id="results" class="results" style="display: none;">
-            <div class="changes-count" id="changesText">Ready to eliminate dashes!</div>
+        <div class="stat">
+          <span class="stat-number" id="totalDashes">0</span>
+          <span class="stat-label">Dashes Eliminated</span>
         </div>
-
-        <div class="donation-section">
-            <div class="panel">
-                <h2 class="panel-title">⚡ SUPPORT THE MISSION</h2>
-                <p class="donation-text">Keep EM DASH KILLER free for everyone. Your donations help cover hosting, development, and new features.</p>
-                <div id="cost-graph">
-                    <div class="progress-label">Hosting: $20/$25 (80%)</div>
-                    <div class="progress-bar"><div class="progress-fill" style="width: 80%;"></div></div>
-                    <div class="progress-label">Domain: $15/$15 (100%)</div>
-                    <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
-                    <div class="progress-label">Development: $25/$40 (63%)</div>
-                    <div class="progress-bar"><div class="progress-fill" style="width: 63%;"></div></div>
-                    <div class="progress-label">Features: $10/$30 (33%)</div>
-                    <div class="progress-bar"><div class="progress-fill" style="width: 33%;"></div></div>
-                    <div class="progress-label" style="color: var(--neon-pink); margin-top: 15px;">$70/$110 total funded</div>
-                </div>
-                <div class="donation-actions">
-                    <a href="https://cash.app/$Americanadventurer" class="donation-button" target="_blank" aria-label="Donate via Cash App">
-                        💸 DONATE VIA CASH APP
-                    </a>
-                    <div class="donation-note">Every dollar helps keep the dashes dead! 🔥</div>
-                </div>
-            </div>
+        <div class="stat">
+          <span class="stat-number" id="credibilityBoost">0%</span>
+          <span class="stat-label">Credibility Boost</span>
         </div>
+      </div>
+    </header>
 
-        <footer>
-            <p>Built for creators who want their AI content to sound naturally human.</p>
-            <p>Client-side processing • No data stored • Instant results</p>
-            <div class="footer-links">
-                <a href="https://github.com" target="_blank">GitHub</a>
-                <a href="https://twitter.com/intent/tweet?text=Transform%20AI-generated%20text%20into%20natural%20writing%20with%20Em%20Dash%20Killer!%20Check%20it%20out:%20https%3A%2F%2Fjkh2.github.io%2Femdash-killer%2F" target="_blank">Share on X</a>
-                <a href="mailto:feedback@emdashkiller.com">Feedback</a>
-            </div>
-        </footer>
+    <div class="main-content">
+      <div class="panel">
+        <h2 class="panel-title">📝 INPUT: Your AI Text</h2>
+        <div class="settings">
+          <label for="dashReplacement">Em Dash Replacement:</label>
+          <select id="dashReplacement">
+            <option value="smart">Smart Context</option>
+            <option value="comma">Comma (,)</option>
+            <option value="period">Period (.)</option>
+            <option value="space">Space</option>
+          </select>
+          <div class="inline">
+            <input type="checkbox" id="richMode" />
+            <label for="richMode" title="Show paragraphs as rich HTML instead of plain text">Rich paragraphs</label>
+          </div>
+        </div>
+        <label for="inputText" class="textarea-label">Paste your AI-generated text here:</label>
+        <textarea id="inputText" placeholder="Paste your AI-generated text here — the text that sounds robotic because it's full of em dashes — and watch the magic happen..." aria-label="Input text for processing"></textarea>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel-title">✨ OUTPUT: Natural Text</h2>
+        <label class="textarea-label">Your transformed text:</label>
+        <!-- Plain text view -->
+        <pre id="outputText" class="output-text" aria-label="Processed output text"></pre>
+        <!-- Rich paragraph view -->
+        <div id="outputRich" class="output-rich" aria-label="Processed output rich" hidden></div>
+        <div class="output-actions">
+          <button class="copy-button" id="copyButton" onclick="copyOutput()" aria-label="Copy processed text">📋 COPY CLEAN TEXT</button>
+          <button class="copy-button" id="downloadTextButton" onclick="downloadOutput()" aria-label="Download processed text">💾 DOWNLOAD AS TEXT</button>
+          <button class="copy-button" id="downloadDocxButton" onclick="downloadDocx()" aria-label="Download processed text as DOCX">📄 DOWNLOAD AS DOCX</button>
+          <button class="copy-button" id="downloadHtmlButton" onclick="downloadHtml()" aria-label="Download processed text as HTML">🌐 DOWNLOAD AS HTML</button>
+          <button class="copy-button" id="downloadMdButton" onclick="downloadMarkdown()" aria-label="Download processed text as Markdown">🔖 DOWNLOAD AS MD</button>
+          <button class="copy-button" id="undoButton" onclick="undoChanges()" aria-label="Undo changes">🔄 UNDO</button>
+          <button class="copy-button" id="resetButton" onclick="resetForm()" aria-label="Reset form">🗑️ RESET</button>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // Placeholder for minified docx.js (version 7.3.0)
-        // In production, download from https://unpkg.com/docx@7.3.0/build/index.js, minify, and embed here
-        const docx = {
-            Document: function() {
-                this.children = [];
-                this.addParagraph = function(paragraph) { this.children.push(paragraph); };
-            },
-            Paragraph: function(options) {
-                this.textRuns = [];
-                this.properties = options.properties || {};
-                this.addRun = function(run) { this.textRuns.push(run); };
-            },
-            TextRun: function(text) { this.text = text; },
-            Packer: {
-                toBlob: function(doc) {
-                    return new Blob([JSON.stringify(doc)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-                }
-            },
-            ParagraphProperties: function(options) { return options; }
+    <div class="action-section">
+      <button class="kill-button" id="killButton" onclick="killDashes()" aria-label="Process text to remove em dashes">⚡ KILL EM DASHES ⚡</button>
+      <div class="spinner" id="spinner"></div>
+    </div>
+
+    <div id="results" class="results" style="display: none;">
+      <div class="changes-count" id="changesText">Ready to eliminate dashes!</div>
+    </div>
+
+    <!-- Optional Wallet section: never auto-connect, sandbox-safe -->
+    <div class="panel">
+      <h2 class="panel-title">🔒 Optional: Wallet (MetaMask)</h2>
+      <p class="donation-text">This tool does <em>not</em> require a wallet. Connect only if you want to test a wallet-safe environment. No calls are made unless you click.</p>
+      <div class="output-actions">
+        <button class="copy-button" onclick="connectWallet()">Connect Wallet (optional)</button>
+        <button class="copy-button" onclick="disconnectWallet()">Disconnect</button>
+        <div class="wallet-status" id="walletStatus">
+          <span class="badge warn">Not connected</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Diagnostics & Test Suite -->
+    <div class="panel test-panel">
+      <h2 class="panel-title">🧪 Built-in Tests & Diagnostics</h2>
+      <p class="donation-text">Run quick checks to ensure formatting, replacements, and exports behave correctly on your device.</p>
+      <div class="output-actions">
+        <button class="copy-button" onclick="runTests()">▶ Run Tests</button>
+      </div>
+      <div class="test-results" id="testResults"></div>
+
+      <div class="diagnostics" id="diagnostics" hidden>
+        <h3>Diagnostics</h3>
+        <pre id="diagnosticsLog"></pre>
+        <div class="hint" id="diagnosticsHint"></div>
+      </div>
+    </div>
+
+    <div class="donation-section">
+      <div class="panel">
+        <h2 class="panel-title">⚡ SUPPORT THE MISSION</h2>
+        <p class="donation-text">Keep EM DASH KILLER free for everyone. Your donations help cover hosting, development, and new features.</p>
+        <div id="cost-graph">
+          <div class="progress-label">Hosting: $20/$25 (80%)</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 80%"></div></div>
+          <div class="progress-label">Domain: $15/$15 (100%)</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div>
+          <div class="progress-label">Development: $25/$40 (63%)</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 63%"></div></div>
+          <div class="progress-label">Features: $10/$30 (33%)</div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 33%"></div></div>
+          <div class="progress-label" style="color: var(--neon-pink); margin-top: 15px;">$70/$110 total funded</div>
+        </div>
+        <div class="donation-actions">
+          <a href="https://cash.app/$Americanadventurer" class="donation-button" target="_blank" rel="noopener" aria-label="Donate via Cash App">💸 DONATE VIA CASH APP</a>
+          <div class="donation-note">Every dollar helps keep the dashes dead! 🔥</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Built for creators who want their AI content to sound naturally human.</p>
+      <p>Client-side processing • No data stored • Instant results</p>
+      <div class="footer-links">
+        <a href="https://github.com" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://twitter.com/intent/tweet?text=Transform%20AI-generated%20text%20into%20natural%20writing%20with%20Em%20Dash%20Killer!%20Check%20it%20out:%20https%3A%2F%2Fjkh2.github.io%2Femdash-killer%2F" target="_blank" rel="noopener">Share on X</a>
+        <a href="mailto:feedback@emdashkiller.com">Feedback</a>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // --- Minimal docx placeholder (kept local-only) ---
+    const docx = {
+      Document: function () { this.children = []; this.addParagraph = (p) => this.children.push(p); },
+      Paragraph: function (opts) { this.textRuns = []; this.properties = opts.properties || {}; this.addRun = (r) => this.textRuns.push(r); },
+      TextRun: function (text) { this.text = text; },
+      Packer: { toBlob: function (doc) { return new Blob([JSON.stringify(doc)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }); } },
+      ParagraphProperties: function (o) { return o; },
+    };
+
+    // --- Persistent stats ---
+    let totalProcessed = parseInt(localStorage.getItem('totalProcessed') || '0');
+    let totalDashes = parseInt(localStorage.getItem('totalDashes') || '0');
+
+    // --- Last values for undo/export ---
+    let originalText = '';
+    let lastProcessedText = '';
+
+    // --- Wallet state (optional) ---
+    let wallet = { connected: false, account: null };
+
+    // --- Diagnostics ---
+    const diag = {
+      panel: null, log: null, hint: null,
+      init() { this.panel = document.getElementById('diagnostics'); this.log = document.getElementById('diagnosticsLog'); this.hint = document.getElementById('diagnosticsHint'); },
+      show(msg, hint) { this.panel.hidden = false; this.log.textContent += msg + "\n"; if (hint) this.hint.textContent = hint; },
+    };
+
+    function updateStats() {
+      document.getElementById('totalProcessed').textContent = totalProcessed;
+      document.getElementById('totalDashes').textContent = totalDashes;
+      document.getElementById('credibilityBoost').textContent = Math.min(totalDashes * 2, 100) + '%';
+    }
+    function saveStats() { localStorage.setItem('totalProcessed', String(totalProcessed)); localStorage.setItem('totalDashes', String(totalDashes)); }
+    updateStats();
+
+    // --- Global error capture (handles unexpected env errors like MetaMask) ---
+    window.addEventListener('error', (e) => {
+      diag.init();
+      const msg = (e && e.message) ? e.message : String(e);
+      diag.show('Error: ' + msg + (e.filename ? `\nSource: ${e.filename}:${e.lineno || ''}` : ''),
+        /metamask/i.test(msg) ? 'Hint: This tool does not use MetaMask. That message usually comes from a browser extension or an injected script in your environment. You can ignore it for this app, or temporarily disable crypto-wallet extensions.' : undefined
+      );
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      diag.init();
+      const reason = (e && e.reason) ? (e.reason.message || JSON.stringify(e.reason)) : 'Unknown promise rejection';
+      diag.show('Unhandled Promise Rejection: ' + reason,
+        /metamask/i.test(String(reason)) ? 'Hint: No web3 calls are made unless you click Connect. If you see MetaMask errors, they originate from extensions or the host sandbox.' : undefined
+      );
+    });
+
+    // Proactively avoid wallet autoconnect from third-party code (we never call automatically)
+    (function guardWallet(){
+      try {
+        if (window.ethereum && typeof window.ethereum === 'object') {
+          // Some providers support this flag
+          if ('autoRefreshOnNetworkChange' in window.ethereum) {
+            window.ethereum.autoRefreshOnNetworkChange = false;
+          }
+          // Listen only after explicit connect
+          ['connect','accountsChanged','chainChanged','disconnect'].forEach(ev=>{
+            if (window.ethereum.removeListener) {
+              // ensure no stale listeners bind before user's consent
+              try { window.ethereum.removeListener(ev, ()=>{}); } catch(_){}
+            }
+          });
+        }
+      } catch (err) { /* ignore */ }
+    })();
+
+    function setWalletStatus(text, ok){
+      const el = document.getElementById('walletStatus');
+      el.innerHTML = `<span class="badge ${ok? 'ok':'warn'}">${text}</span>`;
+    }
+
+    async function connectWallet(){
+      diag.init();
+      if (!window.ethereum) {
+        setWalletStatus('MetaMask not detected', false);
+        diag.show('MetaMask not detected.','Install the MetaMask extension or use a wallet-enabled browser. This app works fine without a wallet.');
+        return;
+      }
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        wallet.connected = accounts && accounts.length > 0; wallet.account = accounts?.[0] || null;
+        setWalletStatus(wallet.connected ? `Connected: ${wallet.account}` : 'Not connected', wallet.connected);
+      } catch (err) {
+        setWalletStatus('Connection failed', false);
+        diag.show('MetaMask connection failed: ' + (err?.message || String(err)), 'If you are in a sandbox or private window, wallet access may be blocked.');
+      }
+    }
+    function disconnectWallet(){ wallet = { connected:false, account:null }; setWalletStatus('Not connected', false); }
+
+    function killDashes() {
+      const inputText = document.getElementById('inputText').value;
+      if (!inputText.trim()) { alert('⚠️ Please paste some text to process!'); return; }
+      if (inputText.length > 100000) { alert('⚠️ Input is too large! Please limit to 100,000 characters.'); return; }
+
+      const killButton = document.getElementById('killButton');
+      const spinner = document.getElementById('spinner');
+      killButton.style.display = 'none'; spinner.style.display = 'block';
+      originalText = inputText;
+
+      setTimeout(() => {
+        try {
+          const result = processText(inputText);
+          lastProcessedText = result.processedText;
+          renderOutput(lastProcessedText);
+
+          totalProcessed++; totalDashes += result.dashesRemoved; saveStats(); updateStats();
+
+          const resultsDiv = document.getElementById('results');
+          const changesText = document.getElementById('changesText');
+          if (result.dashesRemoved > 0 || result.paragraphsAdded > 0 || result.phrasesReplaced > 0) {
+            const parts = [];
+            if (result.dashesRemoved > 0) parts.push(`Eliminated <strong>${result.dashesRemoved}</strong> em dash${result.dashesRemoved === 1 ? '' : 'es'}`);
+            if (result.paragraphsAdded > 0) parts.push(`added <strong>${result.paragraphsAdded}</strong> paragraph break${result.paragraphsAdded === 1 ? '' : 's'}`);
+            if (result.phrasesReplaced > 0) parts.push(`replaced <strong>${result.phrasesReplaced}</strong> AI phrase${result.phrasesReplaced === 1 ? '' : 's'}`);
+            changesText.innerHTML = `🎯 <strong>SUCCESS!</strong> ${parts.join(' and ')}!<br>Your text now flows naturally with proper formatting.`;
+          } else {
+            changesText.innerHTML = `✅ <strong>CLEAN!</strong> No em dashes or AI phrases found, and formatting looks good.<br>Your content already sounds naturally human!`;
+          }
+          resultsDiv.style.display = 'block';
+        } catch (err) {
+          diag.init();
+          diag.show('Processing error: ' + (err && err.message ? err.message : String(err)));
+        } finally {
+          killButton.style.display = 'block'; spinner.style.display = 'none'; killButton.focus();
+          if (window.innerWidth <= 768) { document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        }
+      }, 300);
+    }
+
+    // ===== FIXED & IMPROVED PARAGRAPH LOGIC =====
+    function processText(text) {
+      let dashesRemoved = 0; let paragraphsAdded = 0; let phrasesReplaced = 0;
+      const dashReplacement = document.getElementById('dashReplacement').value;
+
+      // Normalize newlines
+      text = String(text).replace(/\r\n?/g, '\n');
+
+      // 1) Preserve user paragraphs (2+ newlines)
+      const rawParas = text.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+
+      const cleanParas = rawParas.map((para) => {
+        const dashCount = (para.match(/—/g) || []).length; dashesRemoved += dashCount;
+        let s;
+        if (dashReplacement === 'comma') s = para.replace(/\s*—\s*/g, ', ');
+        else if (dashReplacement === 'period') s = para.replace(/\s*—\s*/g, '. ');
+        else if (dashReplacement === 'space') s = para.replace(/\s*—\s*/g, ' ');
+        else {
+          // Smart replacement around em-dashes
+          s = para.replace(/\s*—\s*/g, (match, offset, string) => {
+            const before = string.substring(Math.max(0, offset - 50), offset).trim();
+            const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 50)).trim();
+            if (/^[A-Z]/.test(after) && /[.!?]$/.test(before)) return ' ';
+            if (/^[A-Z]/.test(after) && !/[,;:]$/.test(before)) return '. ';
+            if (/^(and|but|or|yet|so|for|nor|however|therefore|meanwhile|furthermore|moreover|consequently)\b/i.test(after)) return /[.!?]$/.test(before) ? ' ' : ', ';
+            if (/\b(said|explained|noted|added|continued|stated|replied|asked)\s*$/i.test(before)) return ', ';
+            return ', ';
+          });
+        }
+
+        // Phrase cleanups
+        const aiPhrases = {
+          'in the realm of': 'in',
+          'it is imperative that': 'we must',
+          'leverage the power of': 'use',
+          'at the forefront of': 'leading',
+          'in a comprehensive manner': 'thoroughly',
+          'delve into': 'explore',
+          'facilitate the process of': 'help with',
+          'a myriad of': 'many',
         };
-
-        let totalProcessed = parseInt(localStorage.getItem('totalProcessed') || '0');
-        let totalDashes = parseInt(localStorage.getItem('totalDashes') || '0');
-        let originalText = '';
-
-        function updateStats() {
-            document.getElementById('totalProcessed').textContent = totalProcessed;
-            document.getElementById('totalDashes').textContent = totalDashes;
-            document.getElementById('credibilityBoost').textContent = Math.min(totalDashes * 2, 100) + '%';
+        for (const [phrase, replacement] of Object.entries(aiPhrases)) {
+          const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
+          const matches = s.match(regex); if (matches) phrasesReplaced += matches.length; s = s.replace(regex, replacement);
         }
 
-        function saveStats() {
-            localStorage.setItem('totalProcessed', totalProcessed.toString());
-            localStorage.setItem('totalDashes', totalDashes.toString());
-        }
+        // Collapse only spaces/tabs inside paragraph, keep newlines intact
+        s = s
+          .replace(/[ \t]+/g, ' ')
+          .replace(/,\s*,/g, ',')
+          .replace(/;\s*;/g, ';')
+          .replace(/\.\s*\./g, '.')
+          .replace(/\s+([,.;:!?])/g, '$1')
+          .replace(/([,.;:!?])([A-Za-z])/g, '$1 $2')
+          .replace(/([.!?])\s+([a-z])/g, (m, p, l) => p + ' ' + l.toUpperCase())
+          .trim();
 
-        updateStats();
+        return s;
+      });
 
-        function killDashes() {
-            const inputText = document.getElementById('inputText').value;
-            
-            if (!inputText.trim()) {
-                alert('⚠️ Please paste some text to process!');
-                return;
-            }
-
-            if (inputText.length > 100000) {
-                alert('⚠️ Input is too large! Please limit to 100,000 characters.');
-                return;
-            }
-
-            const killButton = document.getElementById('killButton');
-            const spinner = document.getElementById('spinner');
-            killButton.style.display = 'none';
-            spinner.style.display = 'block';
-
-            originalText = inputText;
-
-            setTimeout(() => {
-                const result = processText(inputText);
-                
-                document.getElementById('outputText').innerText = result.processedText;
-                totalProcessed++;
-                totalDashes += result.dashesRemoved;
-                saveStats();
-                updateStats();
-
-                const resultsDiv = document.getElementById('results');
-                const changesText = document.getElementById('changesText');
-                
-                if (result.dashesRemoved > 0 || result.paragraphsAdded > 0 || result.phrasesReplaced > 0) {
-                    let message = `🎯 <strong>SUCCESS!</strong> `;
-                    let changes = [];
-                    if (result.dashesRemoved > 0) {
-                        changes.push(`Eliminated <strong>${result.dashesRemoved}</strong> em dash${result.dashesRemoved === 1 ? '' : 'es'}`);
-                    }
-                    if (result.paragraphsAdded > 0) {
-                        changes.push(`added <strong>${result.paragraphsAdded}</strong> paragraph break${result.paragraphsAdded === 1 ? '' : 's'}`);
-                    }
-                    if (result.phrasesReplaced > 0) {
-                        changes.push(`replaced <strong>${result.phrasesReplaced}</strong> AI phrase${result.phrasesReplaced === 1 ? '' : 's'}`);
-                    }
-                    message += changes.join(' and ') + `!<br>Your text now flows naturally with proper formatting.`;
-                    changesText.innerHTML = message;
-                    resultsDiv.style.display = 'block';
-                } else {
-                    changesText.innerHTML = `
-                        ✅ <strong>CLEAN!</strong> No em dashes or AI phrases found, and formatting looks good.<br>
-                        Your content already sounds naturally human!
-                    `;
-                    resultsDiv.style.display = 'block';
-                }
-
-                killButton.style.display = 'block';
-                spinner.style.display = 'none';
-                killButton.focus();
-
-                if (window.innerWidth <= 768) {
-                    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }, 1000);
-        }
-
-        function processText(text) {
-            let processedText = text;
-            let dashesRemoved = 0;
-            let paragraphsAdded = 0;
-            let phrasesReplaced = 0;
-
-            const dashReplacement = document.getElementById('dashReplacement').value;
-            const chunkSize = 10000;
-            let resultText = '';
-
-            for (let i = 0; i < text.length; i += chunkSize) {
-                const chunk = text.slice(i, i + chunkSize);
-                const originalDashes = (chunk.match(/—/g) || []).length;
-                dashesRemoved += originalDashes;
-                let chunkProcessed;
-                if (dashReplacement === 'comma') {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, ', ');
-                } else if (dashReplacement === 'period') {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, '. ');
-                } else if (dashReplacement === 'space') {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, ' ');
-                } else {
-                    chunkProcessed = chunk.replace(/\s*—\s*/g, (match, offset, string) => {
-                        const before = string.substring(Math.max(0, offset - 50), offset).trim();
-                        const after = string.substring(offset + match.length, Math.min(string.length, offset + match.length + 50)).trim();
-                        if (after.match(/^[A-Z]/) && before.match(/[.!?]$/)) {
-                            return ' ';
-                        } else if (after.match(/^[A-Z]/) && !before.match(/[,;:]$/)) {
-                            return '. ';
-                        } else if (after.match(/^(and|but|or|yet|so|for|nor|however|therefore|meanwhile|furthermore|moreover|consequently)\b/i)) {
-                            if (before.match(/[.!?]$/)) {
-                                return ' ';
-                            }
-                            return ', ';
-                        } else if (before.match(/\b(said|explained|noted|added|continued|stated|replied|asked)\s*$/i)) {
-                            return ', ';
-                        } else {
-                            return ', ';
-                        }
-                    });
-                }
-                resultText += chunkProcessed;
-            }
-            processedText = resultText;
-
-            const aiPhrases = {
-                'in the realm of': 'in',
-                'it is imperative that': 'we must',
-                'leverage the power of': 'use',
-                'at the forefront of': 'leading',
-                'in a comprehensive manner': 'thoroughly',
-                'delve into': 'explore',
-                'facilitate the process of': 'help with',
-                'a myriad of': 'many'
-            };
-
-            for (const [phrase, replacement] of Object.entries(aiPhrases)) {
-                const regex = new RegExp(`\\b${phrase}\\b`, 'gi');
-                const matches = processedText.match(regex);
-                if (matches) {
-                    phrasesReplaced += matches.length;
-                }
-                processedText = processedText.replace(regex, replacement);
-            }
-
-            processedText = processedText
-                .replace(/\s+/g, ' ')
-                .replace(/,\s*,/g, ',')
-                .replace(/;\s*;/g, ';')
-                .replace(/\.\s*\./g, '.')
-                .replace(/\s+([,.;:!?])/g, '$1')
-                .replace(/([,.;:!?])([A-Za-z])/g, '$1 $2')
-                .replace(/([.!?])\s+([a-z])/g, (match, punct, letter) => punct + ' ' + letter.toUpperCase());
-
-            const sentences = processedText.split(/(?<=[.!?])\s+/);
-            let formattedText = '';
-            let currentParagraph = '';
-            let wordCount = 0;
-
-            for (let i = 0; i < sentences.length; i++) {
-                const sentence = sentences[i].trim();
-                if (!sentence) continue;
-
-                currentParagraph += (currentParagraph ? ' ' : '') + sentence;
-                wordCount += sentence.split(/\s+/).length;
-
-                let shouldBreak = false;
-                if (sentence.match(/^(However|Meanwhile|Furthermore|Moreover|In addition|On the other hand|Conversely|Nevertheless|Nonetheless|In contrast|Similarly|Likewise|Therefore|Thus|Consequently|As a result|For example|For instance|In fact|Indeed)/i)) {
-                    shouldBreak = true;
-                }
-                if (sentence.match(/^(Later|Earlier|Meanwhile|Subsequently|Previously|Afterward|Before|After|Then|Next|Finally|Eventually|Ultimate|Now|Today|Yesterday|Tomorrow|Recently|Currently)/i)) {
-                    shouldBreak = true;
-                }
-                if (sentence.match(/"[^"]*"/) && i < sentences.length - 1 && !sentences[i + 1].match(/^(said|explained|noted|added|continued|stated|replied|asked)/i)) {
-                    shouldBreak = true;
-                }
-                if (wordCount >= 150 && !shouldBreak) {
-                    if (i < sentences.length - 1) {
-                        const nextSentence = sentences[i + 1];
-                        if (nextSentence && nextSentence.match(/^[A-Z]/)) {
-                            shouldBreak = true;
-                        }
-                    }
-                }
-                if (shouldBreak && currentParagraph.length > 100) {
-                    formattedText += currentParagraph + '\n\n\n';
-                    currentParagraph = '';
-                    wordCount = 0;
-                    paragraphsAdded++;
-                }
-            }
-
-            if (currentParagraph) {
-                formattedText += currentParagraph;
-            }
-
-            processedText = formattedText
-                .replace(/\n\n\n\n+/g, '\n\n\n')
-                .replace(/^\s+|\s+$/g, '')
-                .replace(/\n\s+/g, '\n');
-
-            return {
-                processedText: processedText,
-                dashesRemoved: dashesRemoved,
-                paragraphsAdded: paragraphsAdded,
-                phrasesReplaced: phrasesReplaced
-            };
-        }
-
-        function copyOutput() {
-            const outputText = document.getElementById('outputText');
-
-            if (!outputText.innerText.trim()) {
-                alert('⚠️ Nothing to copy! Process some text first.');
-                return;
-            }
-
-            const range = document.createRange();
-            range.selectNodeContents(outputText);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-
-            try {
-                document.execCommand('copy');
-                const copyButton = document.getElementById('copyButton');
-                const originalText = copyButton.textContent;
-                copyButton.textContent = '✅ COPIED!';
-                copyButton.style.background = 'rgba(0, 255, 65, 0.2)';
-                setTimeout(() => {
-                    copyButton.textContent = originalText;
-                    copyButton.style.background = '';
-                }, 2000);
-                selection.removeAllRanges();
-            } catch (err) {
-                navigator.clipboard.writeText(outputText.innerText.replace(/\n\n\n/g, '\r\n\r\n\r\n')).then(() => {
-                    const copyButton = document.getElementById('copyButton');
-                    const originalText = copyButton.textContent;
-                    copyButton.textContent = '✅ COPIED!';
-                    setTimeout(() => {
-                        copyButton.textContent = originalText;
-                    }, 2000);
-                }).catch(() => {
-                    alert('❌ Copy failed. Please select and copy manually.');
-                });
-            }
-        }
-
-        function downloadOutput() {
-            const outputText = document.getElementById('outputText').innerText;
-
-            if (!outputText.trim()) {
-                alert('⚠️ Nothing to download! Process some text first.');
-                return;
-            }
-
-            const blob = new Blob([outputText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'em-dash-killer-output.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            const downloadButton = document.getElementById('downloadTextButton');
-            const originalText = downloadButton.textContent;
-            downloadButton.textContent = '✅ DOWNLOADED!';
-            downloadButton.style.background = 'rgba(0, 255, 65, 0.2)';
-            setTimeout(() => {
-                downloadButton.textContent = originalText;
-                downloadButton.style.background = '';
-            }, 2000);
-        }
-
-        function downloadDocx() {
-            const outputText = document.getElementById('outputText').innerText;
-
-            if (!outputText.trim()) {
-                alert('⚠️ Nothing to download! Process some text first.');
-                return;
-            }
-
-            const doc = new docx.Document();
-            const paragraphs = outputText.split('\n\n\n').filter(p => p.trim());
-
-            paragraphs.forEach((paragraphText, index) => {
-                const paragraph = new docx.Paragraph({
-                    properties: {
-                        spacing: {
-                            after: 240 // Equivalent to 12pt spacing after paragraph
-                        }
-                    }
-                });
-                const textRun = new docx.TextRun(paragraphText.trim());
-                paragraph.addRun(textRun);
-                doc.addParagraph(paragraph);
-            });
-
-            const blob = docx.Packer.toBlob(doc);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'em-dash-killer-output.docx';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            const downloadButton = document.getElementById('downloadDocxButton');
-            const originalText = downloadButton.textContent;
-            downloadButton.textContent = '✅ DOWNLOADED!';
-            downloadButton.style.background = 'rgba(0, 255, 65, 0.2)';
-            setTimeout(() => {
-                downloadButton.textContent = originalText;
-                downloadButton.style.background = '';
-            }, 2000);
-        }
-
-        function undoChanges() {
-            if (originalText) {
-                document.getElementById('outputText').innerText = originalText;
-                document.getElementById('results').style.display = 'none';
-            }
-        }
-
-        function resetForm() {
-            window.location.reload();
-        }
-
-        document.getElementById('inputText').addEventListener('input', function() {
-            const text = this.value;
-            const dashCount = (text.match(/—/g) || []).length;
-
-            if (dashCount > 0) {
-                document.getElementById('changesText').innerHTML = `
-                    🎯 Found <strong>${dashCount}</strong> em dash${dashCount === 1 ? '' : 'es'} ready to eliminate!
-                `;
-                document.getElementById('results').style.display = 'block';
-            } else if (text.trim()) {
-                document.getElementById('changesText').innerHTML = `
-                    ✅ No em dashes detected. Your text looks clean!
-                `;
-                document.getElementById('results').style.display = 'block';
-            } else {
-                document.getElementById('results').style.display = 'none';
-            }
+      // 2) Heuristic splitting for very long paragraphs — avoid JS lookbehind for Safari compat
+      const finalParas = []; const MAX_WORDS = 140;
+      cleanParas.forEach((p) => {
+        const words = p.split(/\s+/);
+        if (words.length <= MAX_WORDS) { finalParas.push(p); return; }
+        // Safe sentence matcher: chunks ending with punctuation + whitespace/end
+        const sentences = p.match(/[^.!?]+[.!?]+(?:\s+|$)/g) || [p];
+        let cur = []; let count = 0;
+        sentences.forEach((sent, i) => {
+          const wc = sent.trim().split(/\s+/).filter(Boolean).length; cur.push(sent.trim()); count += wc;
+          const next = sentences[i + 1] || '';
+          const cue = /^(However|Meanwhile|Furthermore|Moreover|In addition|On the other hand|Conversely|Nevertheless|Nonetheless|In contrast|Similarly|Likewise|Therefore|Thus|Consequently|As a result|For example|For instance|In fact|Indeed|Later|Earlier|Subsequently|Previously|Afterward|Before|After|Then|Next|Finally|Eventually|Ultimately|Now|Today|Yesterday|Tomorrow|Recently|Currently)\b/i.test(next.trim());
+          if (count >= MAX_WORDS || cue) { finalParas.push(cur.join(' ').trim()); if (count >= MAX_WORDS) paragraphsAdded++; cur = []; count = 0; }
         });
+        if (cur.length) finalParas.push(cur.join(' ').trim());
+      });
 
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                killDashes();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'C') {
-                e.preventDefault();
-                copyOutput();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
-                e.preventDefault();
-                downloadOutput();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'W') {
-                e.preventDefault();
-                downloadDocx();
-            }
-        });
+      const processedText = finalParas.join('\n\n'); // real blank lines
+      return { processedText, dashesRemoved, paragraphsAdded, phrasesReplaced };
+    }
 
-        function trackUsage(action, value) {
-            console.log(`Action: ${action}, Value: ${value}`);
-        }
-    </script>
+    function renderOutput(text) {
+      const rich = document.getElementById('richMode').checked;
+      const outText = document.getElementById('outputText');
+      const outRich = document.getElementById('outputRich');
+      if (rich) {
+        outText.hidden = true; outRich.hidden = false; outText.textContent = '';
+        const paras = text.split(/\n\n/).filter(Boolean);
+        outRich.innerHTML = paras.map((p) => `<p>${escapeHtml(p)}</p>`).join('');
+      } else {
+        outRich.hidden = true; outText.hidden = false; outRich.innerHTML = '';
+        outText.textContent = text; // pre + pre-wrap keeps blank lines
+      }
+    }
+
+    function escapeHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    document.getElementById('richMode').addEventListener('change', () => {
+      if (lastProcessedText) renderOutput(lastProcessedText);
+    });
+
+    function copyOutput() {
+      if (!lastProcessedText.trim()) { alert('⚠️ Nothing to copy! Process some text first.'); return; }
+      const textToCopy = lastProcessedText.replace(/\n\n/g, '\r\n\r\n');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(() => showFlash('copyButton', '✅ COPIED!')).catch(fallbackCopySelection);
+      } else { fallbackCopySelection(); }
+      function fallbackCopySelection() {
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); showFlash('copyButton', '✅ COPIED!'); }
+        catch (e) { alert('❌ Copy failed. Please select and copy manually.'); }
+        finally { document.body.removeChild(ta); }
+      }
+    }
+
+    function downloadOutput() {
+      if (!lastProcessedText.trim()) { alert('⚠️ Nothing to download! Process some text first.'); return; }
+      const blob = new Blob([lastProcessedText.replace(/\n/g, '\r\n')], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = 'em-dash-killer-output.txt'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      showFlash('downloadTextButton', '✅ DOWNLOADED!');
+    }
+
+    function downloadMarkdown() {
+      if (!lastProcessedText.trim()) { alert('⚠️ Nothing to download! Process some text first.'); return; }
+      const md = lastProcessedText.split(/\n\n/).map(p => p.trim()).filter(Boolean).map(p => p).join('\n\n');
+      const blob = new Blob([md.replace(/\n/g, '\r\n')], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = 'em-dash-killer-output.md'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      showFlash('downloadMdButton', '✅ DOWNLOADED!');
+    }
+
+    function downloadHtml() {
+      if (!lastProcessedText.trim()) { alert('⚠️ Nothing to download! Process some text first.'); return; }
+      const paragraphs = lastProcessedText.split(/\n\n/).filter(Boolean).map(p => `<p>${escapeHtml(p)}</p>`).join('\n');
+      const html = `<!doctype html>\n<meta charset="utf-8">\n<title>EM DASH KILLER Output</title>\n<style>body{font:16px/1.7 system-ui,Segoe UI,Roboto,Arial;padding:32px;color:#111;background:#fff}p{margin:0 0 1em}</style>\n${paragraphs}`;
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = 'em-dash-killer-output.html'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      showFlash('downloadHtmlButton', '✅ DOWNLOADED!');
+    }
+
+    function downloadDocx() {
+      if (!lastProcessedText.trim()) { alert('⚠️ Nothing to download! Process some text first.'); return; }
+      const doc = new docx.Document();
+      const paragraphs = lastProcessedText.split('\n\n').filter((p) => p.trim());
+      paragraphs.forEach((paragraphText) => {
+        const paragraph = new docx.Paragraph({ properties: { spacing: { after: 240 } } });
+        const textRun = new docx.TextRun(paragraphText.trim()); paragraph.addRun(textRun); doc.addParagraph(paragraph);
+      });
+      const blob = docx.Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob); const a = document.createElement('a');
+      a.href = url; a.download = 'em-dash-killer-output.docx'; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+      showFlash('downloadDocxButton', '✅ DOWNLOADED!');
+    }
+
+    function undoChanges() {
+      if (originalText) {
+        document.getElementById('inputText').value = originalText;
+        lastProcessedText = originalText; renderOutput(lastProcessedText);
+        document.getElementById('results').style.display = 'none';
+      }
+    }
+    function resetForm() { window.location.reload(); }
+
+    function showFlash(btnId, text) {
+      const btn = document.getElementById(btnId); const original = btn.textContent;
+      btn.textContent = text; btn.style.background = 'rgba(0, 255, 65, 0.2)';
+      setTimeout(() => { btn.textContent = original; btn.style.background = ''; }, 1800);
+    }
+
+    document.getElementById('inputText').addEventListener('input', function () {
+      const text = this.value; const dashCount = (text.match(/—/g) || []).length;
+      const resultsDiv = document.getElementById('results');
+      if (dashCount > 0) {
+        document.getElementById('changesText').innerHTML = `🎯 Found <strong>${dashCount}</strong> em dash${dashCount === 1 ? '' : 'es'} ready to eliminate!`;
+        resultsDiv.style.display = 'block';
+      } else if (text.trim()) {
+        document.getElementById('changesText').innerHTML = `✅ No em dashes detected. Your text looks clean!`;
+        resultsDiv.style.display = 'block';
+      } else {
+        resultsDiv.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); killDashes(); }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toUpperCase() === 'C') { e.preventDefault(); copyOutput(); }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toUpperCase() === 'D') { e.preventDefault(); downloadOutput(); }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toUpperCase() === 'W') { e.preventDefault(); downloadDocx(); }
+    });
+
+    function trackUsage(action, value) { console.log(`Action: ${action}, Value: ${value}`); }
+
+    // --- Lightweight test suite ---
+    function assert(name, condition) {
+      const el = document.getElementById('testResults');
+      const line = document.createElement('div');
+      line.innerHTML = condition ? `✅ <span class="test-pass">${name}</span>` : `❌ <span class="test-fail">${name}</span>`;
+      el.appendChild(line);
+    }
+
+    function runTests() {
+      const out = document.getElementById('testResults'); out.innerHTML = '';
+
+      // 1) Preserve explicit paragraph breaks
+      let input = 'Para one with — dash.\n\nPara two continues — here.';
+      let r = processText(input);
+      assert('Preserves explicit blank line between paragraphs', /Para one.+\n\nPara two/s.test(r.processedText));
+      assert('Em dashes removed/replaced', !/—/.test(r.processedText));
+
+      // 2) Heuristic split for large paragraph
+      const longSentence = 'This is a sentence. '.repeat(160);
+      r = processText(longSentence);
+      assert('Long block becomes multiple paragraphs', r.processedText.split(/\n\n/).length > 1);
+
+      // 3) AI phrase replacement
+      input = 'It is imperative that we leverage the power of tools in the realm of writing.';
+      r = processText(input);
+      assert('AI phrases simplified', !/imperative|leverage the power|realm of/i.test(r.processedText));
+
+      // 4) Space collapsing should not remove newlines
+      input = 'Line A.   Line B.\n\nLine C.';
+      r = processText(input);
+      assert('Keeps paragraph breaks after space collapsing', /Line B\.[\s\S]*\n\nLine C\./.test(r.processedText));
+
+      // 5) Smart dash rule: Title-case after sentence -> period
+      document.getElementById('dashReplacement').value = 'smart';
+      input = 'He arrived — Then he left.';
+      r = processText(input);
+      assert('Smart dash yields period before Title-case', /He arrived\. Then he left\./.test(r.processedText));
+
+      // 6) Comma mode
+      document.getElementById('dashReplacement').value = 'comma';
+      input = 'Words — more words — and more.';
+      r = processText(input);
+      assert('Comma mode inserts commas', /Words, more words, and more\./.test(r.processedText));
+
+      // 7) Period mode
+      document.getElementById('dashReplacement').value = 'period';
+      input = 'Alpha—Beta';
+      r = processText(input);
+      assert('Period mode inserts period', /Alpha\. Beta/.test(r.processedText));
+
+      // 8) Render parity between plain & rich views
+      document.getElementById('dashReplacement').value = 'smart';
+      input = 'Para A.\n\nPara B.';
+      r = processText(input);
+      lastProcessedText = r.processedText; renderOutput(lastProcessedText); // plain
+      const plainCount = lastProcessedText.split(/\n\n/).length;
+      document.getElementById('richMode').checked = true; renderOutput(lastProcessedText);
+      const richCount = (document.getElementById('outputRich').querySelectorAll('p')||[]).length;
+      assert('Same paragraph count (plain vs rich)', plainCount === richCount);
+      document.getElementById('richMode').checked = false; renderOutput(lastProcessedText);
+
+      // 9) Wallet optional: calling processText works with or without provider
+      const hadEth = Object.prototype.hasOwnProperty.call(window,'ethereum');
+      const prevEth = window.ethereum;
+      try { window.ethereum = undefined; r = processText('One.\n\nTwo.'); assert('Processing OK without MetaMask', /One\.[\s\S]*\n\nTwo\./.test(r.processedText)); }
+      finally { if (hadEth) window.ethereum = prevEth; }
+
+      const done = document.createElement('div');
+      done.style.marginTop = '10px';
+      done.innerHTML = '<strong>Tests complete.</strong> If anything failed, expand Diagnostics below for details.';
+      out.appendChild(done);
+    }
+  </script>
 </body>
 </html>
