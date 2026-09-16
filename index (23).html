@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Em Dash Killer</title>
+<meta name="description" content="Scan your writing for the patterns that make prose read as machine-generated, and fix the ones worth fixing. Everything runs in your browser.">
+<style>
+:root{
+  --bg-primary:#0a0a0f; --bg-secondary:#14142a; --bg-panel:#12121f; --bg-raised:#1a1a2e;
+  --neon-cyan:#00ffff; --neon-pink:#ff0080; --neon-green:#00ff41; --neon-amber:#ffb020;
+  --text-primary:#f2f2f7; --text-secondary:#a8a8bd; --text-muted:#6e6e85;
+  --border:#2a2a40; --border-bright:#3d3d5c;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,'Courier New',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;
+  color-scheme:dark;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:var(--sans);
+  background:var(--bg-primary);
+  background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,255,255,.08),transparent 60%),
+                   radial-gradient(ellipse 60% 40% at 90% 10%,rgba(255,0,128,.06),transparent 60%);
+  background-attachment:fixed;
+  color:var(--text-primary); min-height:100vh; line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.container{max-width:1100px;margin:0 auto;padding:32px 16px 80px}
+
+/* ---------- logo ---------- */
+header{text-align:center;margin-bottom:36px}
+.logo-container{display:flex;flex-direction:column;align-items:center;margin-bottom:18px}
+.logo-badge{position:relative;width:330px;height:190px;max-width:calc(100vw - 40px);
+  filter:drop-shadow(0 0 20px rgba(0,255,255,.35)) drop-shadow(0 0 40px rgba(255,0,128,.22));
+  transition:filter .4s ease,transform .4s ease}
+.logo-badge:hover{filter:drop-shadow(0 0 28px rgba(0,255,255,.7)) drop-shadow(0 0 55px rgba(255,0,128,.5));transform:scale(1.02)}
+.badge-frame{position:absolute;inset:0;border:3px solid;
+  border-image:linear-gradient(45deg,#00ffff,#0088ff,#00ffff) 1;border-radius:20px;
+  background:linear-gradient(135deg,rgba(0,20,40,.9),rgba(20,0,40,.9));
+  box-shadow:inset 0 0 30px rgba(0,255,255,.1)}
+.logo-text-em{position:absolute;top:22px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:1.95rem;font-weight:700;color:#00ffff;letter-spacing:.16em;white-space:nowrap;
+  text-shadow:0 0 15px #00ffff,0 0 30px #00ffff,0 0 45px #0088ff}
+.dash-visual{position:absolute;top:66px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:15px}
+.play-arrow{width:0;height:0;border-left:20px solid #ff0080;border-top:12px solid transparent;border-bottom:12px solid transparent;filter:drop-shadow(0 0 10px #ff0080)}
+.dash-line{width:118px;height:8px;background:linear-gradient(90deg,#ff0080,#ff44aa);border-radius:4px;border:2px solid #ff0080;box-shadow:0 0 15px #ff0080,inset 0 0 10px rgba(255,255,255,.2)}
+.logo-text-killer{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:2.6rem;font-weight:700;color:#ff0080;letter-spacing:.14em;white-space:nowrap;
+  text-shadow:0 0 15px #ff0080,0 0 30px #ff0080,0 0 45px #ff44aa}
+.tagline{color:var(--text-secondary);font-size:1.05rem;max-width:620px;margin:0 auto}
+.tagline strong{color:var(--text-primary);font-weight:600}
+
+/* ---------- panels ---------- */
+.panel{background:var(--bg-panel);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:24px;position:relative;overflow:hidden}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--neon-cyan),var(--neon-pink))}
+.panel-title{font-family:var(--mono);font-size:1.05rem;color:var(--neon-cyan);margin-bottom:6px;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.panel-sub{color:var(--text-muted);font-size:.88rem;margin-bottom:18px}
+
+textarea{width:100%;min-height:230px;background:#08080d;border:1px solid var(--border);border-radius:10px;
+  padding:16px;color:var(--text-primary);font-family:var(--sans);font-size:.98rem;line-height:1.65;resize:vertical;transition:border-color .2s,box-shadow .2s}
+textarea:focus{outline:none;border-color:var(--neon-cyan);box-shadow:0 0 0 3px rgba(0,255,255,.12)}
+textarea::placeholder{color:var(--text-muted)}
+
+.btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.btn{font-family:var(--mono);font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;
+  padding:11px 18px;border-radius:8px;cursor:pointer;border:1px solid var(--border-bright);
+  background:var(--bg-raised);color:var(--text-primary);transition:all .18s}
+.btn:hover{border-color:var(--neon-cyan);color:var(--neon-cyan)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(45deg,var(--neon-pink),#ff4466);border:none;color:#fff;font-size:.95rem;
+  padding:15px 34px;font-weight:700;box-shadow:0 0 26px rgba(255,0,128,.4)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 0 38px rgba(255,0,128,.65);color:#fff}
+.btn-go{border-color:var(--neon-green);color:var(--neon-green)}
+.btn-go:hover{background:rgba(0,255,65,.1);color:var(--neon-green)}
+
+/* ---------- score ---------- */
+.score-wrap{display:grid;grid-template-columns:190px 1fr;gap:26px;align-items:center}
+.dial{position:relative;width:170px;height:170px;margin:0 auto}
+.dial svg{transform:rotate(-90deg)}
+.dial-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.dial-num{font-family:var(--mono);font-size:2.9rem;font-weight:700;line-height:1}
+.dial-label{font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-top:6px}
+.meters{display:flex;flex-direction:column;gap:13px}
+.meter-row{display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:baseline}
+.meter-name{font-size:.87rem;color:var(--text-secondary)}
+.meter-val{font-family:var(--mono);font-size:.82rem;color:var(--text-primary)}
+.meter-track{grid-column:1/-1;height:6px;background:#08080d;border-radius:3px;overflow:hidden}
+.meter-fill{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.score-note{font-size:.84rem;color:var(--text-muted);margin-top:20px;padding-top:16px;border-top:1px solid var(--border);line-height:1.55}
+
+/* ---------- cadence chart ---------- */
+.chart-box{margin-top:6px;background:#08080d;border:1px solid var(--border);border-radius:10px;padding:18px 16px 12px}
+.chart-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.76rem;color:var(--text-muted);margin-top:12px}
+.chart-legend span{display:flex;align-items:center;gap:6px}
+.swatch{width:11px;height:11px;border-radius:2px;display:inline-block}
+.stat-line{display:flex;gap:22px;flex-wrap:wrap;margin-bottom:14px;font-family:var(--mono);font-size:.82rem}
+.stat-line b{color:var(--text-muted);font-weight:400}
+.stat-line i{font-style:normal;color:var(--neon-cyan)}
+
+/* ---------- findings ---------- */
+.group-head{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px;flex-wrap:wrap}
+.group-head h3{font-family:var(--mono);font-size:.92rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-primary)}
+.pill{font-family:var(--mono);font-size:.7rem;padding:2px 9px;border-radius:99px;border:1px solid var(--border-bright);color:var(--text-muted)}
+.group-note{font-size:.85rem;color:var(--text-muted);width:100%;margin-top:-4px}
+
+.finding{background:var(--bg-raised);border:1px solid var(--border);border-left:3px solid var(--border-bright);
+  border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.finding.sev-high{border-left-color:var(--neon-pink)}
+.finding.sev-med{border-left-color:var(--neon-amber)}
+.finding.sev-low{border-left-color:var(--neon-cyan)}
+.finding.sev-ok{border-left-color:var(--neon-green)}
+.f-title{font-weight:600;font-size:.96rem;margin-bottom:5px;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.f-count{font-family:var(--mono);font-size:.72rem;color:var(--text-muted)}
+.f-why{font-size:.88rem;color:var(--text-secondary);margin-bottom:11px}
+.f-snip{font-family:var(--mono);font-size:.82rem;background:#08080d;border:1px solid var(--border);
+  border-radius:6px;padding:9px 11px;margin-bottom:11px;color:var(--text-secondary);overflow-x:auto;white-space:pre-wrap;word-break:break-word}
+.f-snip mark{background:rgba(255,0,128,.25);color:#ffd6e8;border-radius:2px;padding:0 2px}
+.fixes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.fix-label{font-size:.76rem;color:var(--text-muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-right:2px}
+.fix{font-family:var(--mono);font-size:.79rem;padding:6px 12px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--border-bright);background:#08080d;color:var(--text-secondary);transition:all .15s}
+.fix:hover{border-color:var(--neon-cyan);color:var(--neon-cyan)}
+.fix.on{background:rgba(0,255,65,.12);border-color:var(--neon-green);color:var(--neon-green)}
+.no-fix{font-size:.8rem;color:var(--text-muted);font-style:italic}
+
+.empty{text-align:center;padding:30px 16px;color:var(--text-muted);font-size:.92rem}
+
+/* ---------- output ---------- */
+#outputPanel{display:none}
+.out-box{width:100%;min-height:200px;max-height:460px;overflow:auto;background:#08080d;border:1px solid var(--border);
+  border-radius:10px;padding:16px;white-space:pre-wrap;word-break:break-word;font-size:.98rem;line-height:1.7}
+.diff-add{background:rgba(0,255,65,.16);border-radius:2px;padding:0 1px}
+.apply-bar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--bg-raised);border:1px solid var(--border-bright);border-radius:10px;padding:14px 18px;margin-top:22px}
+.apply-count{font-family:var(--mono);font-size:.85rem;color:var(--text-secondary)}
+.apply-count b{color:var(--neon-green)}
+
+/* ---------- donation ---------- */
+.progress-label{font-family:var(--mono);font-size:.78rem;color:var(--text-secondary);margin:9px 0 5px;display:flex;justify-content:space-between}
+.progress-bar{height:7px;background:#08080d;border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--neon-pink),var(--neon-cyan));border-radius:4px}
+.donation-button{display:inline-block;padding:13px 26px;background:linear-gradient(45deg,var(--neon-green),#00cc33);
+  color:#07110a;text-decoration:none;border-radius:8px;font-family:var(--mono);font-size:.86rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;margin-top:18px;box-shadow:0 0 20px rgba(0,255,65,.28);transition:all .2s}
+.donation-button:hover{transform:translateY(-1px);box-shadow:0 0 30px rgba(0,255,65,.55)}
+
+footer{text-align:center;padding:30px 0 0;border-top:1px solid var(--border);color:var(--text-muted);font-size:.85rem;margin-top:36px}
+footer a{color:var(--neon-cyan);text-decoration:none;margin:0 11px}
+footer a:hover{color:var(--neon-pink)}
+.disclaimer{max-width:660px;margin:16px auto 0;font-size:.78rem;line-height:1.6;color:var(--text-muted)}
+
+.spinner{display:none;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--neon-pink);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+
+@media (max-width:820px){
+  .score-wrap{grid-template-columns:1fr;gap:20px}
+  .logo-badge{width:290px;height:168px}
+  .logo-text-em{font-size:1.68rem;top:16px}
+  .logo-text-killer{font-size:2.25rem;bottom:16px}
+  .dash-visual{top:58px}
+  .dash-line{width:96px;height:6px}
+  .play-arrow{border-left-width:16px;border-top-width:10px;border-bottom-width:10px}
+  .container{padding:22px 16px 60px}
+  .panel{padding:18px 16px}
+  .btn-primary{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="logo-container">
+      <div class="logo-badge" role="img" aria-label="Em Dash Killer">
+        <div class="badge-frame"></div>
+        <div class="logo-text-em">EM DASH</div>
+        <div class="dash-visual"><div class="play-arrow"></div><div class="dash-line"></div></div>
+        <div class="logo-text-killer">KILLER</div>
+      </div>
+    </div>
+    <p class="tagline">Find the patterns that make writing read as machine-generated, and fix the ones worth fixing. <strong>Your text never leaves this browser.</strong></p>
+  </header>
+
+  <div class="panel">
+    <h2 class="panel-title">📄 Your Draft</h2>
+    <p class="panel-sub">Paste anything you've written with or without AI help. Nothing is uploaded, stored, or sent anywhere.</p>
+    <label for="inputText" class="sr">Text to scan</label>
+    <textarea id="inputText" placeholder="Paste your draft here…"></textarea>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="scanBtn">⚡ Scan Text</button>
+      <div class="spinner" id="spinner"></div>
+      <button class="btn" id="sampleBtn">Load Sample</button>
+      <button class="btn" id="clearBtn">Clear</button>
+      <span id="liveCount" style="font-family:var(--mono);font-size:.8rem;color:var(--text-muted);margin-left:auto"></span>
+    </div>
+  </div>
+
+  <div id="report" hidden>
+
+    <div class="panel">
+      <h2 class="panel-title">📊 Flatness Reading</h2>
+      <p class="panel-sub">How uniform and hedged the prose reads. Lower is more varied and more human-sounding.</p>
+      <div class="score-wrap">
+        <div class="dial">
+          <svg width="170" height="170" viewBox="0 0 170 170" aria-hidden="true">
+            <circle cx="85" cy="85" r="70" fill="none" stroke="#08080d" stroke-width="13"/>
+            <circle id="dialArc" cx="85" cy="85" r="70" fill="none" stroke="#00ffff" stroke-width="13"
+                    stroke-linecap="round" stroke-dasharray="0 999" style="transition:stroke-dasharray .9s cubic-bezier(.2,.8,.2,1),stroke .5s"/>
+          </svg>
+          <div class="dial-center">
+            <div class="dial-num" id="dialNum">0</div>
+            <div class="dial-label" id="dialWord">—</div>
+          </div>
+        </div>
+        <div class="meters" id="meters"></div>
+      </div>
+      <p class="score-note">This is a <strong>style</strong> reading, not an AI detector. It measures sentence-rhythm uniformity, punctuation density, stock constructions and abstract-noun load — the things a human reader notices. It does not predict what any detection service will say about your text, and a low score is no guarantee of anything. Use it the way you'd use a readability score: as a prompt to reread, not as a verdict.</p>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">📈 Sentence Cadence</h2>
+      <p class="panel-sub">Each bar is one sentence, in order. Human writing zig-zags. Machine writing tends to flatline.</p>
+      <div class="stat-line" id="cadenceStats"></div>
+      <div class="chart-box"><div id="cadenceChart"></div>
+        <div class="chart-legend">
+          <span><i class="swatch" style="background:#00ffff"></i> varied</span>
+          <span><i class="swatch" style="background:#ffb020"></i> in the 18–24 word band</span>
+          <span><i class="swatch" style="background:#ff0080"></i> part of a uniform run</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2 class="panel-title">🔎 Findings</h2>
+      <p class="panel-sub">Pick a fix or leave it alone. Nothing changes until you apply.</p>
+      <div id="findings"></div>
+      <div class="apply-bar">
+        <div class="apply-count"><b id="selCount">0</b> fixes selected</div>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn" id="selectSafeBtn">Select Safe Fixes</button>
+          <button class="btn" id="clearSelBtn">Deselect All</button>
+          <button class="btn btn-go" id="applyBtn">Apply &amp; Preview</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="outputPanel">
+      <h2 class="panel-title">✅ Revised Text</h2>
+      <p class="panel-sub">Changes are highlighted. Reread before you use it — you're still the editor.</p>
+      <div class="out-box" id="outBox"></div>
+      <div class="btn-row">
+        <button class="btn btn-go" id="copyBtn">📋 Copy</button>
+        <button class="btn" id="dlTxt">Download .txt</button>
+        <button class="btn" id="dlMd">Download .md</button>
+        <button class="btn" id="dlRtf">Download .rtf</button>
+        <button class="btn" id="rescanBtn">↻ Rescan Revised</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <h2 class="panel-title">⚡ Support The Mission</h2>
+    <p class="panel-sub">Em Dash Killer is free and always will be. Donations cover hosting and development.</p>
+    <div class="progress-label"><span>Hosting</span><span>$20 / $25</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+    <div class="progress-label"><span>Domain</span><span>$15 / $15</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+    <div class="progress-label"><span>Development</span><span>$25 / $40</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:63%"></div></div>
+    <div class="progress-label"><span>New features</span><span>$10 / $30</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:33%"></div></div>
+    <a href="https://cash.app/$Americanadventurer" class="donation-button" target="_blank" rel="noopener">💸 Donate via Cash App</a>
+  </div>
+
+  <footer>
+    <p>Built for writers who want the conversation to be about their ideas.</p>
+    <div style="margin-top:12px">
+      <a href="https://github.com/jkh2/em-dash-killer" target="_blank" rel="noopener">GitHub</a>
+      <a href="v1.html">Classic version</a>
+      <a href="https://www.jameskeithharwood.com" target="_blank" rel="noopener">About</a>
+    </div>
+    <p class="disclaimer">Em Dash Killer is an editing aid. It is not an AI detector, it does not evade AI detectors, and no result here predicts what any detection service will conclude. If your institution or publisher requires you to disclose AI assistance, disclose it — this tool is for making your prose better, not for hiding how it was made.</p>
+  </footer>
+
+</div>
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   EM DASH KILLER v2 — prose pattern scanner
+   All analysis runs locally. Nothing is transmitted.
+   ============================================================ */
+
+var SM0='', SM1='';           // diff sentinels
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function clamp(n,a,b){return Math.max(a,Math.min(b,n));}
+function pct(n){return Math.round(clamp(n,0,100));}
+
+/* ---------- sentence segmentation ---------- */
+var ABBR = /(?:^|[\s("'])((?:Mr|Mrs|Ms|Dr|Prof|Sr|Jr|St|Rev|Hon|vs|etc|al|Inc|Ltd|Co|Corp|Fig|No|Vol|pp|Ch|Sec|Ed|approx|est|min|max|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)|(?:[A-Za-z]\.){1,4}[A-Za-z])\.$/;
+
+function splitSentences(text){
+  var out=[], start=0, i;
+  for(i=0;i<text.length;i++){
+    var c=text.charAt(i);
+    if(c!=='.'&&c!=='!'&&c!=='?') continue;
+    if(c==='.'&&/\d/.test(text.charAt(i-1))&&/\d/.test(text.charAt(i+1))) continue; // 3.14
+    var j=i; while(j+1<text.length&&/[.!?]/.test(text.charAt(j+1))) j++;
+    var k=j+1; while(k<text.length&&/["'”’)\]]/.test(text.charAt(k))) k++;
+    if(k<text.length&&!/\s/.test(text.charAt(k))){ i=j; continue; }
+    var seg=text.slice(start,k);
+    if(ABBR.test(seg.replace(/\s+$/,''))){ i=j; continue; }
+    if(seg.trim()) out.push({start:start,end:k,text:seg});
+    var m=k; while(m<text.length&&/\s/.test(text.charAt(m))) m++;
+    start=m; i=m-1;
+  }
+  if(start<text.length&&text.slice(start).trim()) out.push({start:start,end:text.length,text:text.slice(start)});
+  return out.map(function(s){
+    s.words=(s.text.match(/[A-Za-z0-9’'-]+/g)||[]).length; return s;
+  }).filter(function(s){return s.words>0;});
+}
+
+function wordCount(t){return (t.match(/[A-Za-z0-9’'-]+/g)||[]).length;}
+
+function scanRe(text,re){
+  var out=[],m; re.lastIndex=0;
+  while((m=re.exec(text))!==null){
+    out.push({start:m.index,end:m.index+m[0].length,m:m});
+    if(m[0].length===0) re.lastIndex++;
+    if(out.length>4000) break;
+  }
+  return out;
+}
+
+/* ---------- snippets ---------- */
+function snippet(text,ranges,label){
+  var r=ranges[0], pad=52;
+  var a=Math.max(0,r[0]-pad), b=Math.min(text.length,r[1]+pad);
+  var inner = label!=null ? '<mark>'+esc(label)+'</mark>' : '<mark>'+esc(text.slice(r[0],r[1]))+'</mark>';
+  var s=(a>0?'…':'')+esc(text.slice(a,r[0]))+inner+esc(text.slice(r[1],b))+(b<text.length?'…':'');
+  return s.replace(/\n/g,' ⏎ ');
+}
+
+/* ============================================================
+   LAYER 1 — invisible artifacts (safe to auto-fix)
+   ============================================================ */
+var INVIS=[
+ {cp:' ',name:'Non-breaking space',to:' ',why:'A non-breaking space, not a normal one. It is invisible on screen but survives copy-paste out of a chat window, breaks find-and-replace, and confuses line wrapping in Word and LaTeX.'},
+ {cp:' ',name:'Narrow no-break space',to:' ',why:'A narrow no-break space. Almost nobody types this. It arrives with text pasted out of a model interface.'},
+ {cp:' ',name:'Thin space',to:' ',why:'A thin space where an ordinary space belongs.'},
+ {cp:' ',name:'Figure space',to:' ',why:'A figure space where an ordinary space belongs.'},
+ {cp:'​',name:'Zero-width space',to:'',why:'A character with no width at all. It shows up nowhere on screen and can silently split words for a spellchecker or a search.'},
+ {cp:'‌',name:'Zero-width non-joiner',to:'',why:'An invisible formatting character with no business in ordinary prose.'},
+ {cp:'‍',name:'Zero-width joiner',to:'',why:'An invisible formatting character with no business in ordinary prose.'},
+ {cp:'﻿',name:'Byte-order mark',to:'',why:'A byte-order mark embedded mid-document. Always an artifact of a copy or an encoding step.'},
+ {cp:' ',name:'Line separator',to:'\n',why:'A Unicode line separator instead of a normal newline. Word processors handle it inconsistently.'},
+ {cp:' ',name:'Paragraph separator',to:'\n\n',why:'A Unicode paragraph separator instead of normal newlines.'},
+ {cp:'→',name:'Arrow character (→)',to:'->',why:'A typographic arrow. Common in generated notes and outlines, rare in finished prose.'},
+ {cp:'✓',name:'Check mark (✓)',to:'',why:'A check-mark glyph left over from a generated list.'}
+];
+
+function scanInvisibles(text){
+  var fs=[],n=0;
+  INVIS.forEach(function(d,di){
+    var hits=[],p=text.indexOf(d.cp);
+    while(p!==-1){ hits.push([p,p+d.cp.length]); p=text.indexOf(d.cp,p+1); if(hits.length>2000) break; }
+    if(!hits.length) return;
+    n+=hits.length;
+    fs.push({
+      id:'inv'+di, layer:'invisible', sev:'high', safe:true,
+      title:d.name, count:hits.length, ranges:hits,
+      why:d.why,
+      snip:snippet(text,hits,'['+d.name+']'),
+      fixes:[{label:d.to===''?'Remove':'Replace with normal space',
+              edits:hits.map(function(r){return [r[0],r[1],d.to];})}]
+    });
+  });
+
+  // mixed quote styles
+  var curly=(text.match(/[“”‘’]/g)||[]).length;
+  var straight=(text.match(/["']/g)||[]).length;
+  if(curly>0&&straight>0&&Math.min(curly,straight)>=2){
+    var hits2=[],rx=/["']/g,mm;
+    while((mm=rx.exec(text))!==null){hits2.push([mm.index,mm.index+1]); if(hits2.length>500)break;}
+    fs.push({
+      id:'quotemix', layer:'invisible', sev:'med', safe:false,
+      title:'Mixed straight and curly quotes', count:straight, ranges:hits2,
+      why:'The document contains '+curly+' typographic quote'+(curly===1?'':'s')+' and '+straight+' straight one'+(straight===1?'':'s')+'. That inconsistency is a signature of text assembled from more than one source, and copy editors catch it immediately.',
+      snip:snippet(text,hits2),
+      fixes:[{label:'Make all straight',edits:text.split('').map(function(ch,ix){
+        if(ch==='“'||ch==='”') return [ix,ix+1,'"'];
+        if(ch==='‘'||ch==='’') return [ix,ix+1,"'"];
+        return null;}).filter(Boolean)}]
+    });
+  }
+
+  // double spaces after sentence end
+  var dbl=scanRe(text,/[.!?]  +/g);
+  if(dbl.length>=3){
+    fs.push({
+      id:'dblspace', layer:'invisible', sev:'low', safe:true,
+      title:'Inconsistent spacing after sentences', count:dbl.length,
+      ranges:dbl.map(function(h){return [h.start,h.end];}),
+      why:'Runs of two or more spaces after a full stop. Harmless, but it is inconsistent with the rest of the document and it is the kind of thing that gets flagged in copyedit.',
+      snip:snippet(text,[[dbl[0].start,dbl[0].end]],'. ␣␣'),
+      fixes:[{label:'Collapse to one space',edits:dbl.map(function(h){return [h.start,h.end,text.charAt(h.start)+' '];})}]
+    });
+  }
+  return {findings:fs,total:n};
+}
+
+/* ============================================================
+   LAYER 2 — em dash classification
+   ============================================================ */
+function dashSpan(text,p){
+  var a=p,b=p+1;
+  var SP=/[ \t\u00A0\u202F\u2009\u2007]/;
+  while(a>0&&SP.test(text.charAt(a-1))) a--;
+  while(b<text.length&&SP.test(text.charAt(b))) b++;
+  return [a,b];
+}
+
+function scanDashes(text,sents){
+  var pos=[],i;
+  for(i=0;i<text.length;i++) if(text.charAt(i)==='—') pos.push(i);
+  if(!pos.length) return {findings:[],total:0};
+
+  var bySent={};
+  pos.forEach(function(p){
+    var key='tail';
+    for(var q=0;q<sents.length;q++){ if(p>=sents[q].start&&p<sents[q].end){key=String(sents[q].start);break;} }
+    (bySent[key]=bySent[key]||[]).push(p);
+  });
+
+  var fs=[],n=0,fid=0;
+  Object.keys(bySent).forEach(function(k){
+    var group=bySent[k];
+
+    // pair up when a sentence holds an even number of dashes >= 2
+    if(group.length>=2 && group.length%2===0){
+      for(var g=0;g<group.length;g+=2){
+        var o=dashSpan(text,group[g]), c=dashSpan(text,group[g+1]);
+        n+=2; fid++;
+        fs.push({
+          id:'dash'+fid, layer:'dash', sev:'med', safe:false,
+          title:'Paired dashes around an aside', count:2, ranges:[o,c],
+          why:'Two dashes fencing off a parenthetical. These have to be changed together or the sentence breaks — which is exactly the mistake most find-and-replace tools make. Parentheses signal a quieter aside; commas fold the aside into the sentence; the dashes themselves are correct English if you want the interruption to land hard.',
+          snip:snippet(text,[[o[0],c[1]]]),
+          fixes:[
+            {label:'Parentheses ( )',edits:[[o[0],o[1],' ('],[c[0],c[1],') ']]},
+            {label:'Commas , ,',edits:[[o[0],o[1],', '],[c[0],c[1],', ']]}
+          ]
+        });
+      }
+      return;
+    }
+
+    group.forEach(function(p){
+      var sp=dashSpan(text,p), after=text.slice(p+1,p+40), before=text.slice(Math.max(0,p-40),p);
+      n++; fid++;
+      var lineStart=text.lastIndexOf('\n',p-1)+1;
+      var onlyWsBefore=/^\s*$/.test(text.slice(lineStart,p));
+
+      // numeric range
+      if(/\d\s*$/.test(before)&&/^\s*\d/.test(after)){
+        fs.push({id:'dash'+fid,layer:'dash',sev:'low',safe:true,
+          title:'Dash used for a number range',count:1,ranges:[sp],
+          why:'A range between two numbers takes an en dash (–), not an em dash. This is a straight typographic correction, and every style guide agrees on it.',
+          snip:snippet(text,[sp]),
+          fixes:[{label:'Use en dash –',edits:[[sp[0],sp[1],'–']]}]});
+        return;
+      }
+      // attribution line
+      if(onlyWsBefore&&/^\s*[A-Z]/.test(after)){
+        fs.push({id:'dash'+fid,layer:'dash',sev:'ok',safe:false,
+          title:'Attribution dash',count:1,ranges:[sp],
+          why:'A dash opening a line before a name is standard attribution formatting after a quotation. This is correct as written and no reader will read it as a tell.',
+          snip:snippet(text,[sp]),fixes:[]});
+        return;
+      }
+      // interrupted speech
+      if(/^["”’']/.test(after)){
+        fs.push({id:'dash'+fid,layer:'dash',sev:'ok',safe:false,
+          title:'Interrupted dialogue',count:1,ranges:[sp],
+          why:'A dash cutting off speech at a closing quote is the correct way to render an interruption. Leave it.',
+          snip:snippet(text,[sp]),fixes:[]});
+        return;
+      }
+
+      // appositive / aside
+      var nextCh=text.charAt(sp[1])||'';
+      var capNext=nextCh?nextCh.toUpperCase():'';
+      var listish=/^\s*(a|an|the|one|two|three|more|most|less|fewer|something|someone|everything|nothing|which|who|that|what|where|when|why|how)\b/i.test(after);
+      var fixes=[
+        {label:'Comma',edits:[[sp[0],sp[1],', ']]},
+        {label:'Colon',edits:[[sp[0],sp[1],': ']]},
+        {label:'Full stop',edits:[[sp[0],sp[1]+ (nextCh?1:0),'. '+capNext]]}
+      ];
+      fs.push({id:'dash'+fid,layer:'dash',sev:'med',safe:false,
+        title: listish?'Dash introducing an aside or example':'Dash joining two clauses',count:1,ranges:[sp],
+        why: listish
+          ? 'The dash is introducing something that expands on what came before. A colon does that job explicitly, a comma folds it in more quietly, and a full stop gives the second half its own weight. Read the sentence aloud and pick the one that matches the pause you actually want.'
+          : 'The dash is doing the work of a conjunction or a full stop. Substituting punctuation keeps the sentence intact, but if the clause on either side is long, the sharper edit is usually to rewrite it into two sentences of different lengths — which also helps your cadence.',
+        snip:snippet(text,[sp]),fixes:fixes});
+    });
+  });
+  return {findings:fs,total:n};
+}
+
+/* ============================================================
+   LAYER 3 — cadence
+   ============================================================ */
+function analyzeCadence(sents){
+  var L=sents.map(function(s){return s.words;}), n=L.length;
+  if(n<2) return {L:L,n:n,mean:n?L[0]:0,sd:0,cv:0,bandRun:0,flatRun:0,flatIdx:{}};
+  var mean=L.reduce(function(a,b){return a+b;},0)/n;
+  var sd=Math.sqrt(L.reduce(function(a,b){return a+Math.pow(b-mean,2);},0)/n);
+  var cv=mean?sd/mean:0;
+
+  var bandRun=0,cur=0;
+  L.forEach(function(v){ if(v>=18&&v<=24){cur++;if(cur>bandRun)bandRun=cur;} else cur=0; });
+
+  // longest run of sentences all within a 6-word window
+  var flatRun=0, flatIdx={}, i,j;
+  for(i=0;i<n;i++){
+    var lo=L[i],hi=L[i];
+    for(j=i;j<n;j++){
+      lo=Math.min(lo,L[j]); hi=Math.max(hi,L[j]);
+      if(hi-lo>6) break;
+      var len=j-i+1;
+      if(len>flatRun){ flatRun=len; flatIdx={}; for(var k=i;k<=j;k++) flatIdx[k]=1; }
+    }
+  }
+  if(flatRun<4) flatIdx={};
+  return {L:L,n:n,mean:mean,sd:sd,cv:cv,bandRun:bandRun,flatRun:flatRun,flatIdx:flatIdx};
+}
+
+/* ============================================================
+   LAYER 4 — structural and lexical tics
+   ============================================================ */
+var WORDY=[
+ ['in order to','to'],['due to the fact that','because'],['owing to the fact that','because'],
+ ['at this point in time','now'],['at the present time','now'],['in the event that','if'],
+ ['for the purpose of','to'],['has the ability to','can'],['have the ability to','can'],
+ ['is able to','can'],['are able to','can'],['a large number of','many'],['a myriad of','many'],
+ ['in spite of the fact that','although'],['with regard to','about'],['with respect to','about'],
+ ['in the realm of','in'],['it is imperative that','we must'],['leverage the power of','use'],
+ ['at the forefront of','leading'],['in a comprehensive manner','thoroughly'],
+ ['facilitate the process of','help with'],['in the near future','soon'],
+ ['a significant number of','many'],['it is important to note that','note that'],
+ ['it should be noted that','note that'],['take into consideration','consider'],
+ ['in close proximity to','near'],['on a regular basis','regularly'],['prior to','before'],
+ ['subsequent to','after'],['in terms of','for']
+];
+
+var STOCK=['delve into','delve deeper','tapestry','testament to','underscores the importance',
+ 'underscore the importance','plays a crucial role','play a crucial role','it is worth noting',
+ 'in today\u2019s fast-paced','in today\'s fast-paced','ever-evolving','ever-changing',
+ 'unlock the potential','unlock the power','navigate the complexities','navigating the complexities',
+ 'shed light on','embark on a journey','paving the way','pave the way','at its core',
+ 'when it comes to','more than just','serves as a','stands as a','cornerstone of',
+ 'a beacon of','the intersection of','dive deep','deep dive','game-changer','game changer',
+ 'in conclusion','rich tapestry','stark contrast','pivotal role','holistic approach',
+ 'multifaceted','meticulous attention','realm of possibility','harness the power',
+ 'foster a culture','robust framework','seamless integration','landscape of'];
+
+function scanStructure(text,sents,words){
+  var fs=[],raw={};
+  function add(id,sev,title,why,hits,mkFixes,note){
+    if(!hits.length) return;
+    fs.push({id:id,layer:'structure',sev:sev,safe:false,title:title,count:hits.length,
+      ranges:hits.map(function(h){return [h.start,h.end];}),
+      why:why, note:note||null,
+      snip:snippet(text,[[hits[0].start,hits[0].end]]),
+      fixes:mkFixes?mkFixes(hits):[]});
+  }
+
+  // "it's not X, it's Y"
+  var a=scanRe(text,/\b(?:it(?:'|\u2019)?s|this is|that(?:'|\u2019)?s|they(?:'|\u2019)?re|we(?:'|\u2019)?re)\s+not\s+(?:just\s+|merely\s+|only\s+|simply\s+)?[^.,;:!?\n]{2,60}[,;]\s*(?:it(?:'|\u2019)?s|this is|that(?:'|\u2019)?s|they(?:'|\u2019)?re|we(?:'|\u2019)?re|but)\b/gi);
+  var b=scanRe(text,/\bnot\s+(?:just|only|merely|simply)\s+[^.,;:!?\n]{2,60},\s*but\b/gi);
+  raw.notx=a.length+b.length;
+  add('notxy','high','"It\u2019s not X, it\u2019s Y" construction',
+    'This antithesis frame is the single most recognisable rhetorical habit in generated prose. Used once it is fine. Used more than once in a piece it becomes a drumbeat that readers now notice consciously. The usual fix is to cut the negation and just assert the positive claim.',
+    a.concat(b));
+
+  // rule of three
+  var tri=scanRe(text,/\b([A-Za-z][\w\u2019'-]*(?:\s+[\w\u2019'-]+){0,2}),\s+([A-Za-z][\w\u2019'-]*(?:\s+[\w\u2019'-]+){0,2}),\s+and\s+([A-Za-z][\w\u2019'-]*(?:\s+[\w\u2019'-]+){0,2})\b/g);
+  raw.tri=tri.length;
+  var per1k=words?tri.length/words*1000:0;
+  if(tri.length>=3&&per1k>=4){
+    add('triads','med','Rule-of-three lists',
+      'Triads appear '+tri.length+' times ('+per1k.toFixed(1)+' per 1,000 words). Three-item lists are natural in small doses; at this density they become a rhythm the reader starts to anticipate. Break a few into pairs, or let one run to four or five items.',
+      tri);
+  }
+
+  // and-chained long sentences
+  var chain=[];
+  sents.forEach(function(s){
+    if(s.words<25) return;
+    var ands=(s.text.match(/\band\b/gi)||[]).length;
+    var marks=(s.text.match(/[,;:()\u2014]/g)||[]).length;
+    if(ands>=2&&marks<=2) chain.push({start:s.start,end:s.end});
+  });
+  raw.chain=chain.length;
+  add('andchain','med','Long sentences strung together with "and"',
+    'These sentences run past 25 words, lean on "and" to join their clauses, and carry almost no internal punctuation. That combination \u2014 long, loose, lightly punctuated \u2014 is the structure most strongly associated with generated text in recent analysis. Split them, or add the commas and semicolons a human writer would reach for.',
+    chain);
+
+  // wordy phrases
+  var wfix=[];
+  WORDY.forEach(function(pair,pi){
+    var re=new RegExp('\\b'+pair[0].replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');
+    var hits=scanRe(text,re);
+    if(!hits.length) return;
+    wfix.push({id:'wordy'+pi,layer:'phrase',sev:'low',safe:true,
+      title:'"'+pair[0]+'" \u2192 "'+pair[1]+'"',count:hits.length,
+      ranges:hits.map(function(h){return [h.start,h.end];}),
+      why:'Padding. "'+pair[1]+'" says the same thing in fewer words, and terse beats verbose on every readability measure there is.',
+      snip:snippet(text,[[hits[0].start,hits[0].end]]),
+      fixes:[{label:'Replace with "'+pair[1]+'"',
+        edits:hits.map(function(h){
+          var orig=text.slice(h.start,h.end), r=pair[1];
+          if(/^[A-Z]/.test(orig)) r=r.charAt(0).toUpperCase()+r.slice(1);
+          return [h.start,h.end,r];})}]});
+  });
+
+  // stock phrases (flag only, density-aware)
+  var stockHits=[],stockNames={};
+  STOCK.forEach(function(p){
+    var re=new RegExp('\\b'+p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');
+    scanRe(text,re).forEach(function(h){stockHits.push(h);stockNames[p]=(stockNames[p]||0)+1;});
+  });
+  raw.stock=stockHits.length;
+  raw.stockPer1k=words?stockHits.length/words*1000:0;
+  if(stockHits.length>=2){
+    stockHits.sort(function(x,y){return x.start-y.start;});
+    var top=Object.keys(stockNames).sort(function(x,y){return stockNames[y]-stockNames[x];}).slice(0,6)
+      .map(function(k){return '"'+k+'"'+(stockNames[k]>1?' \u00d7'+stockNames[k]:'');}).join(', ');
+    fs.push({id:'stock',layer:'phrase',sev:'med',safe:false,
+      title:'Stock phrasing',count:stockHits.length,
+      ranges:stockHits.map(function(h){return [h.start,h.end];}),
+      why:'Found '+stockHits.length+' instance'+(stockHits.length===1?'':'s')+' ('+raw.stockPer1k.toFixed(1)+' per 1,000 words): '+top+'. None of these is wrong. They are simply worn smooth from overuse, and a reader who has spent a year reading generated text will feel them. No automatic replacement here \u2014 the right substitute depends on what you actually mean.',
+      snip:snippet(text,[[stockHits[0].start,stockHits[0].end]]),fixes:[]});
+  }
+
+  // nominalizations
+  var nom=scanRe(text,/\b[A-Za-z]{4,}(?:tion|tions|ment|ments|ance|ances|ence|ences|ity|ities|ness|nesses|ization|izations|isation|isations)\b/g);
+  raw.nom=nom.length;
+  raw.nomPer100=words?nom.length/words*100:0;
+  if(raw.nomPer100>=7&&nom.length>=5){
+    fs.push({id:'nomz',layer:'phrase',sev:'med',safe:false,
+      title:'Heavy abstract-noun load',count:nom.length,
+      ranges:nom.map(function(h){return [h.start,h.end];}),
+      why:raw.nomPer100.toFixed(1)+' nominalisations per 100 words. These are nouns built out of verbs \u2014 "implementation" from "implement", "effectiveness" from "effective". They pile up abstraction and bury the actor. Turning a few back into verbs ("we implemented" rather than "the implementation of") is the fastest way to make a paragraph sound like a person wrote it.',
+      snip:snippet(text,[[nom[0].start,nom[0].end]]),fixes:[]});
+  }
+
+  // punctuation density
+  var marks=(text.match(/[,;:()]/g)||[]).length;
+  raw.punctPer100=words?marks/words*100:0;
+  return {findings:fs.concat(wfix),raw:raw};
+}
+
+/* ============================================================
+   SCORING
+   ============================================================ */
+function score(cad,raw,words){
+  var cadence=0;
+  if(cad.n>=4){
+    cadence=pct((0.62-cad.cv)/(0.62-0.18)*100);
+    cadence=pct(cadence+Math.min(28,Math.max(0,cad.flatRun-3)*7)+Math.min(18,Math.max(0,cad.bandRun-2)*6));
+  }
+  var punct = words>=120 ? pct((9-raw.punctPer100)/(9-3)*100) : 0;
+  var struct= pct(raw.notx*22 + raw.chain*11 + Math.max(0,raw.tri-2)*8);
+  var vocab = pct((raw.nomPer100-4)/(12-4)*100 + Math.min(45,raw.stockPer1k*5));
+  var overall=pct(cadence*0.40 + punct*0.20 + struct*0.22 + vocab*0.18);
+  return {overall:overall,cadence:cadence,punct:punct,struct:struct,vocab:vocab};
+}
+function band(v){
+  if(v<25) return {word:'varied',color:'#00ff41'};
+  if(v<45) return {word:'mostly varied',color:'#00ffff'};
+  if(v<65) return {word:'leaning flat',color:'#ffb020'};
+  if(v<85) return {word:'flat',color:'#ff0080'};
+  return {word:'very flat',color:'#ff0080'};
+}
+
+/* ============================================================
+   EDIT APPLICATION
+   ============================================================ */
+function collectEdits(){
+  var out=[];
+  Object.keys(selected).forEach(function(fid){
+    var f=findingById[fid]; if(!f) return;
+    var fx=f.fixes[selected[fid]]; if(!fx) return;
+    fx.edits.forEach(function(e){out.push(e);});
+  });
+  out.sort(function(a,b){return (a[0]-b[0]) || ((b[1]-b[0])-(a[1]-a[0]));});
+  var safe=[],last=-1;
+  out.forEach(function(e){ if(e[0]>=last){safe.push(e);last=e[1];} });
+  return safe;
+}
+function applyEdits(text,edits,mark){
+  var out=text, i;
+  for(i=edits.length-1;i>=0;i--){
+    var e=edits[i], rep=mark?(SM0+e[2]+SM1):e[2];
+    out=out.slice(0,e[0])+rep+out.slice(e[1]);
+  }
+  return out;
+}
+function markedToHtml(s){
+  return esc(s).split(SM0).join('<span class="diff-add">').split(SM1).join('</span>');
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function drawCadence(cad){
+  var box=document.getElementById('cadenceChart');
+  if(cad.n<2){box.innerHTML='<p style="color:var(--text-muted);font-size:.85rem;margin:8px 0">Not enough sentences to chart a rhythm. Paste a few paragraphs.</p>';return;}
+  var L=cad.L, n=L.length, max=Math.max.apply(null,L), W=Math.max(320,Math.min(1000,n*14)), H=150;
+  var bw=W/n, gap=n>90?0:Math.min(3,bw*0.22);
+  var bars='',i;
+  for(i=0;i<n;i++){
+    var h=Math.max(2,(L[i]/max)*(H-26));
+    var col = cad.flatIdx[i] ? '#ff0080' : (L[i]>=18&&L[i]<=24 ? '#ffb020' : '#00ffff');
+    bars+='<rect x="'+(i*bw+gap/2).toFixed(2)+'" y="'+(H-26-h).toFixed(2)+'" width="'+Math.max(1,bw-gap).toFixed(2)+
+      '" height="'+h.toFixed(2)+'" rx="1.5" fill="'+col+'" opacity="0.85"><title>Sentence '+(i+1)+': '+L[i]+' words</title></rect>';
+  }
+  var my=H-26-(cad.mean/max)*(H-26);
+  bars+='<line x1="0" y1="'+my.toFixed(2)+'" x2="'+W+'" y2="'+my.toFixed(2)+'" stroke="#a8a8bd" stroke-width="1" stroke-dasharray="4,4" opacity="0.6"/>';
+  bars+='<text x="4" y="'+(my-5).toFixed(2)+'" fill="#a8a8bd" font-size="10" font-family="monospace">mean '+cad.mean.toFixed(1)+'</text>';
+  bars+='<text x="0" y="'+(H-8)+'" fill="#6e6e85" font-size="10" font-family="monospace">sentence 1</text>';
+  bars+='<text x="'+W+'" y="'+(H-8)+'" text-anchor="end" fill="#6e6e85" font-size="10" font-family="monospace">'+n+'</text>';
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" preserveAspectRatio="none" role="img" aria-label="Sentence length chart">'+bars+'</svg>';
+
+  var verdict = cad.cv<0.30 ? 'very uniform' : cad.cv<0.45 ? 'somewhat uniform' : cad.cv<0.62 ? 'reasonably varied' : 'strongly varied';
+  document.getElementById('cadenceStats').innerHTML=
+    '<span><b>sentences</b> <i>'+cad.n+'</i></span>'+
+    '<span><b>mean length</b> <i>'+cad.mean.toFixed(1)+' words</i></span>'+
+    '<span><b>std dev</b> <i>'+cad.sd.toFixed(1)+'</i></span>'+
+    '<span><b>variation</b> <i>'+cad.cv.toFixed(2)+' \u2014 '+verdict+'</i></span>'+
+    (cad.flatRun>=4?'<span><b>longest flat run</b> <i>'+cad.flatRun+' sentences</i></span>':'')+
+    (cad.bandRun>=3?'<span><b>18\u201324 band run</b> <i>'+cad.bandRun+'</i></span>':'');
+}
+
+function drawScore(sc){
+  var b=band(sc.overall), C=2*Math.PI*70, len=(sc.overall/100)*C;
+  var arc=document.getElementById('dialArc');
+  arc.setAttribute('stroke',b.color);
+  arc.setAttribute('stroke-dasharray',len.toFixed(1)+' '+(C-len).toFixed(1));
+  var num=document.getElementById('dialNum');
+  num.textContent=sc.overall; num.style.color=b.color;
+  document.getElementById('dialWord').textContent=b.word;
+
+  var rows=[
+    ['Sentence rhythm',sc.cadence,'How much your sentence lengths vary'],
+    ['Punctuation density',sc.punct,'Commas, semicolons, colons and parentheses per 100 words'],
+    ['Structural tics',sc.struct,'Antithesis frames, triads, and-chained sentences'],
+    ['Vocabulary',sc.vocab,'Abstract nouns and worn phrasing']
+  ];
+  document.getElementById('meters').innerHTML=rows.map(function(r){
+    var bb=band(r[1]);
+    return '<div class="meter-row"><span class="meter-name" title="'+esc(r[2])+'">'+r[0]+'</span>'+
+      '<span class="meter-val" style="color:'+bb.color+'">'+r[1]+'</span>'+
+      '<span class="meter-track"><span class="meter-fill" style="width:'+r[1]+'%;background:'+bb.color+'"></span></span></div>';
+  }).join('');
+}
+
+var GROUPS=[
+  {key:'invisible',title:'Invisible characters',note:'Hidden Unicode left behind by copy-paste. Nobody types these by hand, they are invisible on screen, and they are the one category where an automatic fix is always correct.'},
+  {key:'dash',title:'Em dashes',note:'Classified by the job each dash is doing. Some of these are correct English and are marked as such. Where a dash is genuinely load-bearing, the honest fix is often to rewrite the sentence rather than swap a mark.'},
+  {key:'structure',title:'Sentence structure',note:'Patterns in how the sentences are built. No automatic fixes here \u2014 these need a writer.'},
+  {key:'phrase',title:'Word choice',note:'Wordiness with a clean substitution, plus phrasing that has been worn smooth.'}
+];
+
+function renderFindings(fs){
+  var host=document.getElementById('findings');
+  if(!fs.length){host.innerHTML='<div class="empty">No findings. Either the text is clean or it is too short to say much about.</div>';return;}
+  var html='';
+  GROUPS.forEach(function(g){
+    var list=fs.filter(function(f){return f.layer===g.key;});
+    if(!list.length) return;
+    var total=list.reduce(function(a,f){return a+f.count;},0);
+    html+='<div class="group-head"><h3>'+g.title+'</h3><span class="pill">'+total+' found</span>'+
+          '<div class="group-note">'+g.note+'</div></div>';
+    list.forEach(function(f){
+      html+='<div class="finding sev-'+f.sev+'" data-fid="'+f.id+'">'+
+        '<div class="f-title">'+esc(f.title)+'<span class="f-count">\u00d7'+f.count+'</span></div>'+
+        '<div class="f-why">'+f.why+'</div>'+
+        '<div class="f-snip">'+f.snip+'</div>';
+      if(f.fixes.length){
+        html+='<div class="fixes"><span class="fix-label">Fix:</span>';
+        f.fixes.forEach(function(fx,ix){
+          html+='<button class="fix" data-fid="'+f.id+'" data-ix="'+ix+'">'+esc(fx.label)+
+                (f.count>1?' <span style="opacity:.6">(all '+f.count+')</span>':'')+'</button>';
+        });
+        html+='<button class="fix" data-fid="'+f.id+'" data-ix="-1">Leave as is</button></div>';
+      } else {
+        html+='<div class="no-fix">'+(f.sev==='ok'?'Correct as written \u2014 nothing to do.':'Judgement call. No automatic fix offered.')+'</div>';
+      }
+      html+='</div>';
+    });
+  });
+  host.innerHTML=html;
+  Array.prototype.forEach.call(host.querySelectorAll('.fix'),function(btn){
+    btn.addEventListener('click',function(){
+      var fid=btn.getAttribute('data-fid'), ix=parseInt(btn.getAttribute('data-ix'),10);
+      if(ix<0) delete selected[fid]; else selected[fid]=ix;
+      syncFixButtons();
+    });
+  });
+  syncFixButtons();
+}
+
+function syncFixButtons(){
+  Array.prototype.forEach.call(document.querySelectorAll('.fix'),function(btn){
+    var fid=btn.getAttribute('data-fid'), ix=parseInt(btn.getAttribute('data-ix'),10);
+    var on = ix<0 ? !(fid in selected) : selected[fid]===ix;
+    btn.classList.toggle('on',on);
+  });
+  var n=0;
+  Object.keys(selected).forEach(function(fid){
+    var f=findingById[fid]; if(f) n+=f.count;
+  });
+  document.getElementById('selCount').textContent=n;
+}
+
+/* ============================================================
+   STATE + WIRING
+   ============================================================ */
+var current='', findings=[], findingById={}, selected={}, revised='';
+
+function runScan(text){
+  current=text; selected={}; findingById={}; revised='';
+  document.getElementById('outputPanel').style.display='none';
+  var sents=splitSentences(text), words=wordCount(text);
+  var inv=scanInvisibles(text);
+  var dsh=scanDashes(text,sents);
+  var cad=analyzeCadence(sents);
+  var st=scanStructure(text,sents,words);
+  findings=inv.findings.concat(dsh.findings,st.findings);
+  findings.forEach(function(f){findingById[f.id]=f;});
+  findings.forEach(function(f){ if(f.safe&&f.fixes.length) selected[f.id]=0; });
+  drawScore(score(cad,st.raw,words));
+  drawCadence(cad);
+  renderFindings(findings);
+  document.getElementById('report').hidden=false;
+}
+
+function download(name,mime,content){
+  var blob=new Blob([content],{type:mime}), url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+function toRtf(t){
+  var body=t.replace(/\\/g,'\\\\').replace(/{/g,'\\{').replace(/}/g,'\\}')
+    .replace(/[\u0080-\uFFFF]/g,function(c){return '\\u'+c.charCodeAt(0)+'?';})
+    .split(/\n{2,}/).join('\\par\\par ').split('\n').join('\\line ');
+  return '{\\rtf1\\ansi\\deff0{\\fonttbl{\\f0 Times New Roman;}}\\fs24 '+body+'}';
+}
+function flash(btn,txt){
+  var o=btn.textContent; btn.textContent=txt; btn.classList.add('btn-go');
+  setTimeout(function(){btn.textContent=o;btn.classList.remove('btn-go');},1600);
+}
+
+var SAMPLE="The implementation of artificial intelligence in academic research is not just a technical shift \u2014 it is a fundamental reimagining of how knowledge gets produced. Researchers across disciplines are now leveraging the power of large language models in order to accelerate their literature reviews and analysis. This transformation raises questions about attribution, methodology, and credibility that the academy has not yet resolved.\n\nIt is important to note that the concerns are legitimate and the resistance is understandable and the pace of change has been genuinely disorienting for many scholars. Critics argue that the utilisation of these systems undermines the development of independent scholarly judgement. Proponents counter that the technology is merely an extension of tools researchers have always used \u2014 the citation index, the statistical package, the spellchecker.\n\nWhat gets lost in this debate is the question of disclosure. A doctoral candidate whose supervisor rewrites a paragraph does not footnote the supervisor. A paper that passes through three rounds of peer review, a copy editor, and a proofreader arrives in print as the work of its named authors. The standard has never been that writing must be unassisted \u2014 it has been that the author takes responsibility for every claim in it.";
+
+document.addEventListener('DOMContentLoaded',function(){
+  var ta=document.getElementById('inputText'),
+      live=document.getElementById('liveCount');
+
+  function updateLive(){
+    var t=ta.value, w=wordCount(t), d=(t.match(/\u2014/g)||[]).length;
+    live.textContent = t.trim() ? w+' words \u00b7 '+d+' em dash'+(d===1?'':'es') : '';
+  }
+  ta.addEventListener('input',updateLive);
+
+  document.getElementById('scanBtn').addEventListener('click',function(){
+    var t=ta.value;
+    if(!t.trim()){ alert('Paste some text first.'); return; }
+    var sp=document.getElementById('spinner'); sp.style.display='block';
+    setTimeout(function(){
+      try{ runScan(t); }
+      catch(err){ console.error(err); alert('Something went wrong analysing that text: '+err.message); }
+      sp.style.display='none';
+      document.getElementById('report').scrollIntoView({behavior:'smooth',block:'start'});
+    },40);
+  });
+
+  document.getElementById('sampleBtn').addEventListener('click',function(){
+    ta.value=SAMPLE.replace('academic research','academic\u00A0research').replace('proofreader','proof\u200Breader');
+    updateLive();
+  });
+  document.getElementById('clearBtn').addEventListener('click',function(){
+    ta.value=''; updateLive(); document.getElementById('report').hidden=true;
+  });
+
+  document.getElementById('selectSafeBtn').addEventListener('click',function(){
+    findings.forEach(function(f){ if(f.safe&&f.fixes.length) selected[f.id]=0; });
+    syncFixButtons();
+  });
+  document.getElementById('clearSelBtn').addEventListener('click',function(){
+    selected={}; syncFixButtons();
+  });
+
+  document.getElementById('applyBtn').addEventListener('click',function(){
+    var edits=collectEdits();
+    if(!edits.length){ alert('No fixes selected yet. Choose one on any finding above.'); return; }
+    revised=applyEdits(current,edits,false);
+    document.getElementById('outBox').innerHTML=markedToHtml(applyEdits(current,edits,true));
+    var p=document.getElementById('outputPanel');
+    p.style.display='block';
+    p.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+
+  document.getElementById('copyBtn').addEventListener('click',function(){
+    var btn=this;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(revised).then(function(){flash(btn,'\u2713 Copied');},
+        function(){alert('Copy failed \u2014 select the text and copy manually.');});
+    } else {
+      var t=document.createElement('textarea'); t.value=revised; document.body.appendChild(t);
+      t.select(); try{document.execCommand('copy');flash(btn,'\u2713 Copied');}catch(e){alert('Copy failed.');}
+      document.body.removeChild(t);
+    }
+  });
+  document.getElementById('dlTxt').addEventListener('click',function(){download('revised.txt','text/plain;charset=utf-8',revised);});
+  document.getElementById('dlMd').addEventListener('click',function(){download('revised.md','text/markdown;charset=utf-8',revised);});
+  document.getElementById('dlRtf').addEventListener('click',function(){download('revised.rtf','application/rtf',toRtf(revised));});
+  document.getElementById('rescanBtn').addEventListener('click',function(){
+    ta.value=revised; updateLive(); runScan(revised);
+    document.getElementById('report').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+
+  document.addEventListener('keydown',function(e){
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();document.getElementById('scanBtn').click();}
+  });
+});
+
+})();
+</script>
+</body>
+</html>
