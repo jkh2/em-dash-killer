@@ -97,6 +97,21 @@ textarea::placeholder{color:var(--text-muted)}
 .stat-line b{color:var(--text-muted);font-weight:400}
 .stat-line i{font-style:normal;color:var(--neon-cyan)}
 
+.prov-head{font-family:var(--mono);font-size:.76rem;color:var(--text-secondary);margin:16px 0 6px;padding-top:12px;border-top:1px solid var(--border)}
+.prov-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.76rem;color:var(--text-muted);margin-top:8px}
+.prov-legend span{display:flex;align-items:center;gap:6px}
+.prov-note{font-size:.78rem;color:var(--text-muted);margin-top:10px;line-height:1.55}
+
+.import-note{font-size:.84rem;margin-top:14px;padding:11px 14px;border-radius:8px;line-height:1.55}
+.import-note.ok{background:rgba(0,255,65,.08);border:1px solid rgba(0,255,65,.35);color:#b6ffcb}
+.import-note.bad{background:rgba(255,0,128,.08);border:1px solid rgba(255,0,128,.4);color:#ffc2dd}
+.cbar{cursor:pointer}
+.cbar:hover{opacity:1}
+#sentReadout{background:var(--bg-raised);border:1px solid var(--neon-cyan);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.sr-head{font-family:var(--mono);font-size:.78rem;color:var(--neon-cyan);margin-bottom:8px;letter-spacing:.04em}
+.sr-body{font-size:.95rem;line-height:1.65;color:var(--text-primary)}
+.sr-foot{font-size:.78rem;color:var(--text-muted);margin-top:9px}
+
 /* ---------- findings ---------- */
 .group-head{display:flex;align-items:baseline;gap:10px;margin:26px 0 12px;flex-wrap:wrap}
 .group-head h3{font-family:var(--mono);font-size:.92rem;letter-spacing:.05em;text-transform:uppercase;color:var(--text-primary)}
@@ -134,6 +149,14 @@ textarea::placeholder{color:var(--text-muted)}
   background:var(--bg-raised);border:1px solid var(--border-bright);border-radius:10px;padding:14px 18px;margin-top:22px}
 .apply-count{font-family:var(--mono);font-size:.85rem;color:var(--text-secondary)}
 .apply-count b{color:var(--neon-green)}
+
+.brief-opts{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px}
+.brief-opts label{display:flex;align-items:center;gap:7px;font-size:.85rem;color:var(--text-secondary);cursor:pointer}
+.brief-opts input{accent-color:var(--neon-green);width:15px;height:15px;cursor:pointer}
+#briefText{min-height:280px;font-family:var(--mono);font-size:.82rem;line-height:1.6;color:var(--text-secondary)}
+#briefMeta{font-family:var(--mono);font-size:.78rem;color:var(--text-muted);margin-left:auto}
+.brief-foot{font-size:.82rem;color:var(--text-muted);margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+#briefPanel{display:none}
 
 /* ---------- donation ---------- */
 .progress-label{font-family:var(--mono);font-size:.78rem;color:var(--text-secondary);margin:9px 0 5px;display:flex;justify-content:space-between}
@@ -190,10 +213,13 @@ footer a:hover{color:var(--neon-pink)}
     <div class="btn-row">
       <button class="btn btn-primary" id="scanBtn">⚡ Scan Text</button>
       <div class="spinner" id="spinner"></div>
+      <button class="btn" id="importBtn">📁 Import .docx</button>
+      <input type="file" id="fileInput" accept=".docx,.txt,.md,.markdown" hidden>
       <button class="btn" id="sampleBtn">Load Sample</button>
       <button class="btn" id="clearBtn">Clear</button>
       <span id="liveCount" style="font-family:var(--mono);font-size:.8rem;color:var(--text-muted);margin-left:auto"></span>
     </div>
+    <p class="import-note" id="importNote" hidden></p>
   </div>
 
   <div id="report" hidden>
@@ -215,18 +241,21 @@ footer a:hover{color:var(--neon-pink)}
         </div>
         <div class="meters" id="meters"></div>
       </div>
-      <p class="score-note">This is a <strong>style</strong> reading, not an AI detector. It measures sentence-rhythm uniformity, punctuation density, stock constructions and abstract-noun load — the things a human reader notices. It does not predict what any detection service will say about your text, and a low score is no guarantee of anything. Use it the way you'd use a readability score: as a prompt to reread, not as a verdict.</p>
+      <p class="score-note">This is a <strong>style</strong> reading, not an AI detector. It measures sentence-rhythm uniformity, punctuation density, stock constructions and abstract-noun load — the things a human reader notices. Thresholds are calibrated against 1,283 human-written passages (19th-century literary prose and contemporary expository writing): <strong>half of them score 9 or below, and only 1% reach &ldquo;leaning flat&rdquo;</strong>. It does not predict what any detection service will say about your text, and a low score guarantees nothing. Use it the way you'd use a readability score: as a prompt to reread, not as a verdict.</p>
     </div>
 
     <div class="panel">
       <h2 class="panel-title">📈 Sentence Cadence</h2>
       <p class="panel-sub">Each bar is one sentence, in order. Human writing zig-zags. Machine writing tends to flatline.</p>
       <div class="stat-line" id="cadenceStats"></div>
+      <div id="sentReadout" hidden></div>
       <div class="chart-box"><div id="cadenceChart"></div>
+        <div id="provStrip" hidden></div>
         <div class="chart-legend">
           <span><i class="swatch" style="background:#00ffff"></i> varied</span>
           <span><i class="swatch" style="background:#ffb020"></i> in the 18–24 word band</span>
           <span><i class="swatch" style="background:#ff0080"></i> part of a uniform run</span>
+          <span style="color:var(--text-muted)">· click any bar to jump to that sentence</span>
         </div>
       </div>
     </div>
@@ -245,6 +274,25 @@ footer a:hover{color:var(--neon-pink)}
       </div>
     </div>
 
+
+    <div class="panel" id="briefPanel">
+      <h2 class="panel-title">📤 Rewrite Brief</h2>
+      <p class="panel-sub">The findings that need a writer, packaged as a prompt. Paste it into Claude, ChatGPT or whatever you already use. <strong>Only the flagged sentences are included — never your whole document.</strong></p>
+      <div class="brief-opts" id="briefOpts">
+        <label><input type="checkbox" id="optRhythm" checked> Flat passages</label>
+        <label><input type="checkbox" id="optStruct" checked> Structural tics</label>
+        <label><input type="checkbox" id="optDash" checked> Load-bearing dashes</label>
+        <label><input type="checkbox" id="optWord" checked> Worn phrasing</label>
+      </div>
+      <label for="briefText" class="sr">Generated prompt</label>
+      <textarea id="briefText" readonly></textarea>
+      <div class="btn-row">
+        <button class="btn btn-go" id="copyBriefBtn">📋 Copy Brief</button>
+        <button class="btn" id="dlBrief">Download .txt</button>
+        <span id="briefMeta"></span>
+      </div>
+      <p class="brief-foot">When your revisions come back, paste them into the draft box at the top and scan again to see what moved.</p>
+    </div>
     <div class="panel" id="outputPanel">
       <h2 class="panel-title">✅ Revised Text</h2>
       <p class="panel-sub">Changes are highlighted. Reread before you use it — you're still the editor.</p>
@@ -515,7 +563,7 @@ function scanDashes(text,sents){
    ============================================================ */
 function analyzeCadence(sents){
   var L=sents.map(function(s){return s.words;}), n=L.length;
-  if(n<2) return {L:L,n:n,mean:n?L[0]:0,sd:0,cv:0,bandRun:0,flatRun:0,flatIdx:{}};
+  if(n<2) return {L:L,n:n,mean:n?L[0]:0,sd:0,cv:0,bandRun:0,flatRun:0,flatIdx:{},runs:[]};
   var mean=L.reduce(function(a,b){return a+b;},0)/n;
   var sd=Math.sqrt(L.reduce(function(a,b){return a+Math.pow(b-mean,2);},0)/n);
   var cv=mean?sd/mean:0;
@@ -523,19 +571,25 @@ function analyzeCadence(sents){
   var bandRun=0,cur=0;
   L.forEach(function(v){ if(v>=18&&v<=24){cur++;if(cur>bandRun)bandRun=cur;} else cur=0; });
 
-  // longest run of sentences all within a 6-word window
-  var flatRun=0, flatIdx={}, i,j;
-  for(i=0;i<n;i++){
-    var lo=L[i],hi=L[i];
-    for(j=i;j<n;j++){
-      lo=Math.min(lo,L[j]); hi=Math.max(hi,L[j]);
-      if(hi-lo>6) break;
-      var len=j-i+1;
-      if(len>flatRun){ flatRun=len; flatIdx={}; for(var k=i;k<=j;k++) flatIdx[k]=1; }
+  // Every maximal run of sentences inside a 4-word window, 5 or more long.
+  // Calibrated against 2,587 human-written passages (19th-c literary prose +
+  // contemporary expository prose): these parameters fire on ~3% of them.
+  var runs=[], flatIdx={}, flatRun=0, i=0, j, lo, hi, nlo, nhi, k;
+  while(i<n){
+    lo=L[i]; hi=L[i]; j=i;
+    while(j+1<n){
+      nlo=Math.min(lo,L[j+1]); nhi=Math.max(hi,L[j+1]);
+      if(nhi-nlo>4) break;
+      lo=nlo; hi=nhi; j++;
     }
+    if(j-i+1>=5){
+      runs.push([i,j]);
+      if(j-i+1>flatRun) flatRun=j-i+1;
+      for(k=i;k<=j;k++) flatIdx[k]=1;
+    }
+    i = (j>i) ? j+1 : i+1;
   }
-  if(flatRun<4) flatIdx={};
-  return {L:L,n:n,mean:mean,sd:sd,cv:cv,bandRun:bandRun,flatRun:flatRun,flatIdx:flatIdx};
+  return {L:L,n:n,mean:mean,sd:sd,cv:cv,bandRun:bandRun,flatRun:flatRun,flatIdx:flatIdx,runs:runs};
 }
 
 /* ============================================================
@@ -581,10 +635,13 @@ function scanStructure(text,sents,words){
   // "it's not X, it's Y"
   var a=scanRe(text,/\b(?:it(?:'|\u2019)?s|this is|that(?:'|\u2019)?s|they(?:'|\u2019)?re|we(?:'|\u2019)?re)\s+not\s+(?:just\s+|merely\s+|only\s+|simply\s+)?[^.,;:!?\n]{2,60}[,;]\s*(?:it(?:'|\u2019)?s|this is|that(?:'|\u2019)?s|they(?:'|\u2019)?re|we(?:'|\u2019)?re|but)\b/gi);
   var b=scanRe(text,/\bnot\s+(?:just|only|merely|simply)\s+[^.,;:!?\n]{2,60},\s*but\b/gi);
-  raw.notx=a.length+b.length;
+  // looser subject ("...a system that is not just faster, it is more maintainable"),
+  // which needs the qualifier present to stay specific enough
+  var c=scanRe(text,/\b(?:is|are|was|were|becomes|remains)\s+not\s+(?:just|only|merely|simply)\s+[^.,;:!?\n]{2,60}[,;]\s*(?:it(?:'|’)?s|this is|that(?:'|’)?s|they(?:'|’)?re|it is|they are|but)\b/gi);
+  raw.notx=a.length+b.length+c.length;
   add('notxy','high','"It\u2019s not X, it\u2019s Y" construction',
     'This antithesis frame is the single most recognisable rhetorical habit in generated prose. Used once it is fine. Used more than once in a piece it becomes a drumbeat that readers now notice consciously. The usual fix is to cut the negation and just assert the positive claim.',
-    a.concat(b));
+    a.concat(b).concat(c));
 
   // rule of three
   var tri=scanRe(text,/\b([A-Za-z][\w\u2019'-]*(?:\s+[\w\u2019'-]+){0,2}),\s+([A-Za-z][\w\u2019'-]*(?:\s+[\w\u2019'-]+){0,2}),\s+and\s+([A-Za-z][\w\u2019'-]*(?:\s+[\w\u2019'-]+){0,2})\b/g);
@@ -668,10 +725,13 @@ function scanStructure(text,sents,words){
    SCORING
    ============================================================ */
 function score(cad,raw,words){
+  // Human baseline, coefficient of variation over 10-sentence windows
+  // (n=2587): p50=0.524  p25=0.429  p10=0.353  p05=0.310  p02=0.268
+  // Median human prose therefore scores 0; the 5th percentile scores ~75.
   var cadence=0;
   if(cad.n>=4){
-    cadence=pct((0.62-cad.cv)/(0.62-0.18)*100);
-    cadence=pct(cadence+Math.min(28,Math.max(0,cad.flatRun-3)*7)+Math.min(18,Math.max(0,cad.bandRun-2)*6));
+    cadence=pct((0.52-cad.cv)/(0.52-0.24)*100);
+    cadence=pct(cadence+Math.min(24,Math.max(0,cad.flatRun-4)*8)+Math.min(14,Math.max(0,cad.bandRun-3)*5));
   }
   var punct = words>=120 ? pct((9-raw.punctPer100)/(9-3)*100) : 0;
   var struct= pct(raw.notx*22 + raw.chain*11 + Math.max(0,raw.tri-2)*8);
@@ -726,8 +786,8 @@ function drawCadence(cad){
   for(i=0;i<n;i++){
     var h=Math.max(2,(L[i]/max)*(H-26));
     var col = cad.flatIdx[i] ? '#ff0080' : (L[i]>=18&&L[i]<=24 ? '#ffb020' : '#00ffff');
-    bars+='<rect x="'+(i*bw+gap/2).toFixed(2)+'" y="'+(H-26-h).toFixed(2)+'" width="'+Math.max(1,bw-gap).toFixed(2)+
-      '" height="'+h.toFixed(2)+'" rx="1.5" fill="'+col+'" opacity="0.85"><title>Sentence '+(i+1)+': '+L[i]+' words</title></rect>';
+    bars+='<rect data-i="'+i+'" class="cbar" x="'+(i*bw+gap/2).toFixed(2)+'" y="'+(H-26-h).toFixed(2)+'" width="'+Math.max(1,bw-gap).toFixed(2)+
+      '" height="'+h.toFixed(2)+'" rx="1.5" fill="'+col+'" opacity="0.85"><title>Sentence '+(i+1)+': '+L[i]+' words \u2014 click to jump</title></rect>';
   }
   var my=H-26-(cad.mean/max)*(H-26);
   bars+='<line x1="0" y1="'+my.toFixed(2)+'" x2="'+W+'" y2="'+my.toFixed(2)+'" stroke="#a8a8bd" stroke-width="1" stroke-dasharray="4,4" opacity="0.6"/>';
@@ -735,8 +795,12 @@ function drawCadence(cad){
   bars+='<text x="0" y="'+(H-8)+'" fill="#6e6e85" font-size="10" font-family="monospace">sentence 1</text>';
   bars+='<text x="'+W+'" y="'+(H-8)+'" text-anchor="end" fill="#6e6e85" font-size="10" font-family="monospace">'+n+'</text>';
   box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="'+H+'" preserveAspectRatio="none" role="img" aria-label="Sentence length chart">'+bars+'</svg>';
+  Array.prototype.forEach.call(box.querySelectorAll('rect[data-i]'),function(r){
+    r.addEventListener('click',function(){ focusSentence(+r.getAttribute('data-i')); });
+  });
+  document.getElementById('sentReadout').hidden=true;
 
-  var verdict = cad.cv<0.30 ? 'very uniform' : cad.cv<0.45 ? 'somewhat uniform' : cad.cv<0.62 ? 'reasonably varied' : 'strongly varied';
+  var verdict = cad.cv<0.31 ? 'very uniform (below the 5th percentile of human prose)' : cad.cv<0.36 ? 'somewhat uniform (~10th percentile)' : cad.cv<0.43 ? 'moderately varied (~25th percentile)' : cad.cv<0.53 ? 'varied (typical)' : 'strongly varied';
   document.getElementById('cadenceStats').innerHTML=
     '<span><b>sentences</b> <i>'+cad.n+'</i></span>'+
     '<span><b>mean length</b> <i>'+cad.mean.toFixed(1)+' words</i></span>'+
@@ -829,24 +893,376 @@ function syncFixButtons(){
 }
 
 /* ============================================================
+   .docx IMPORT — a docx is a zip of XML. Unzipped here with
+   DecompressionStream, so there is still no library and no upload.
+   ============================================================ */
+function xmlDecode(t){
+  return t.replace(/&#(\d+);/g,function(m,d){return String.fromCharCode(+d);})
+          .replace(/&#x([0-9a-f]+);/gi,function(m,h){return String.fromCharCode(parseInt(h,16));})
+          .replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"')
+          .replace(/&apos;/g,"'").replace(/&amp;/g,'&');
+}
+function zipIndex(buf){
+  var dv=new DataView(buf), u8=new Uint8Array(buf), eocd=-1, i;
+  for(i=u8.length-22;i>=Math.max(0,u8.length-66000);i--){
+    if(dv.getUint32(i,true)===0x06054b50){eocd=i;break;}
+  }
+  if(eocd<0) throw new Error('That does not look like a .docx file.');
+  var count=dv.getUint16(eocd+10,true), p=dv.getUint32(eocd+16,true), out={}, k;
+  for(k=0;k<count;k++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    var nameLen=dv.getUint16(p+28,true), extraLen=dv.getUint16(p+30,true), cmtLen=dv.getUint16(p+32,true);
+    var name=new TextDecoder().decode(u8.subarray(p+46,p+46+nameLen));
+    out[name]={method:dv.getUint16(p+10,true), csize:dv.getUint32(p+20,true), lho:dv.getUint32(p+42,true)};
+    p+=46+nameLen+extraLen+cmtLen;
+  }
+  return {dv:dv,u8:u8,entries:out};
+}
+function zipRead(z,name){
+  var e=z.entries[name]; if(!e) return Promise.resolve(null);
+  var nameLen=z.dv.getUint16(e.lho+26,true), extraLen=z.dv.getUint16(e.lho+28,true);
+  var start=e.lho+30+nameLen+extraLen, data=z.u8.subarray(start,start+e.csize);
+  if(e.method===0) return Promise.resolve(new TextDecoder().decode(data));
+  if(e.method!==8) return Promise.reject(new Error('Unsupported compression inside the .docx.'));
+  if(typeof DecompressionStream==='undefined')
+    return Promise.reject(new Error('This browser cannot unzip .docx files. Chrome, Edge, Firefox 113+ or Safari 16.4+ can. You can still paste the text in directly.'));
+  var stream=new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+  return new Response(stream).arrayBuffer().then(function(ab){return new TextDecoder().decode(ab);});
+}
+function docxToText(xml){
+  var ins=(xml.match(/<w:ins[\s>]/g)||[]).length,
+      del=(xml.match(/<w:del[\s>]/g)||[]).length;
+  xml=xml.replace(/<w:delText[^>]*>[\s\S]*?<\/w:delText>/g,'');   // accepted view
+  var paras=xml.split(/<w:p[\s>]/).slice(1), out=[];
+  paras.forEach(function(blk){
+    var t='', re=/<w:t(?:\s[^>]*)?>([\s\S]*?)<\/w:t>/g, m;
+    while((m=re.exec(blk))!==null) t+=m[1];
+    t=xmlDecode(t).replace(/[ \t]+/g,' ').trim();
+    if(t) out.push(t);
+  });
+  return {text:out.join('\n\n'), paras:out.length, ins:ins, del:del};
+}
+function importDocx(file){
+  var note=document.getElementById('importNote');
+  note.textContent='Reading ' + file.name + '…'; note.hidden=false;
+  file.arrayBuffer().then(function(buf){
+    var z=zipIndex(buf);
+    return zipRead(z,'word/document.xml').then(function(xml){
+      if(!xml) throw new Error('No document body found inside that .docx.');
+      return zipRead(z,'word/comments.xml').then(function(cx){
+        return {doc:docxToText(xml), comments:cx?(cx.match(/<w:comment[\s>]/g)||[]).length:0};
+      });
+    });
+  }).then(function(r){
+    if(!r.doc.text.trim()) throw new Error('That document appears to contain no text.');
+    var ta=document.getElementById('inputText');
+    ta.value=r.doc.text; provReset('p');
+    var bits=['Imported '+r.doc.paras+' paragraph'+(r.doc.paras===1?'':'s')+' from '+file.name+'.'];
+    if(r.doc.ins||r.doc.del) bits.push('Tracked changes present ('+r.doc.ins+' insertion'+(r.doc.ins===1?'':'s')+', '+r.doc.del+' deletion'+(r.doc.del===1?'':'s')+') — imported as if accepted.');
+    if(r.comments) bits.push(r.comments+' comment'+(r.comments===1?'':'s')+' in the file; comment text is not imported.');
+    bits.push('Formatting is not preserved — revise here, then apply the wording back in Word.');
+    note.textContent=bits.join(' ');
+    note.className='import-note ok';
+    document.getElementById('inputText').dispatchEvent(new Event('input'));
+    provReset('p');
+    updateLiveGlobal();
+  }).catch(function(err){
+    note.textContent=err.message||'Could not read that file.';
+    note.className='import-note bad';
+  });
+}
+function importPlain(file){
+  var note=document.getElementById('importNote');
+  file.text().then(function(t){
+    document.getElementById('inputText').value=t; provReset('p'); updateLiveGlobal();
+    note.textContent='Imported '+file.name+'.'; note.className='import-note ok'; note.hidden=false;
+  });
+}
+function handleImport(file){
+  if(!file) return;
+  if(/\.(docx)$/i.test(file.name)) importDocx(file);
+  else if(/\.(txt|md|markdown|text)$/i.test(file.name)) importPlain(file);
+  else {
+    var note=document.getElementById('importNote');
+    note.textContent='Unsupported file type. Use .docx, .txt or .md, or paste the text in.';
+    note.className='import-note bad'; note.hidden=false;
+  }
+}
+
+/* ---------- chart drill-down ---------- */
+function focusSentence(i){
+  var sn=lastSents[i]; if(!sn) return;
+  var ta=document.getElementById('inputText');
+  ta.focus(); ta.setSelectionRange(sn.start,sn.end);
+  if(ta.value.length) ta.scrollTop=Math.max(0,(sn.start/ta.value.length)*ta.scrollHeight - ta.clientHeight/2);
+  var NAME={t:'typed in this window',p:'pasted in',m:'mixed',u:''};
+  var kind=(lastProv&&lastProv.per)?NAME[lastProv.per[i]]:'';
+  var box=document.getElementById('sentReadout');
+  box.innerHTML='<div class="sr-head">Sentence '+(i+1)+' of '+lastSents.length+
+    ' · '+sn.words+' words · '+(sn.words>lastCad.mean?'+':'')+
+    (sn.words-lastCad.mean).toFixed(1)+' vs average'+(kind?' · '+kind:'')+
+    '</div><div class="sr-body">'+esc(sn.text.replace(/\s+/g,' ').trim())+'</div>'+
+    '<div class="sr-foot">Selected in the draft box above — edit it there and scan again.</div>';
+  box.hidden=false;
+  Array.prototype.forEach.call(document.querySelectorAll('#cadenceChart rect[data-i]'),function(r){
+    r.setAttribute('stroke', +r.getAttribute('data-i')===i ? '#ffffff' : 'none');
+    r.setAttribute('stroke-width', +r.getAttribute('data-i')===i ? '1.5' : '0');
+  });
+}
+
+/* ============================================================
+   PROVENANCE — what was typed here vs pasted in, this session.
+   A fact about this browser window, not a guess about authorship.
+   ============================================================ */
+var origin=[], prevVal='', pasteFlag=false;
+
+function provReset(tag){
+  var ta=document.getElementById('inputText'), n=ta.value.length, i;
+  origin=[]; for(i=0;i<n;i++) origin.push(tag);
+  prevVal=ta.value;
+}
+function provOnInput(val){
+  var a=0, minLen=Math.min(prevVal.length,val.length), b=0, i;
+  while(a<minLen && prevVal.charAt(a)===val.charAt(a)) a++;
+  while(b<minLen-a && prevVal.charAt(prevVal.length-1-b)===val.charAt(val.length-1-b)) b++;
+  var removed=prevVal.length-a-b, inserted=val.length-a-b;
+  var tag=pasteFlag?'p':'t', ins=[];
+  for(i=0;i<inserted;i++) ins.push(tag);
+  origin.splice.apply(origin,[a,removed].concat(ins));
+  prevVal=val; pasteFlag=false;
+}
+function provValid(text){ return origin.length===text.length && text.length>0; }
+
+function provForSentences(text,sents){
+  if(!provValid(text)) return null;
+  var typed=0,pasted=0,i;
+  for(i=0;i<origin.length;i++){
+    if(/\s/.test(text.charAt(i))) continue;
+    if(origin[i]==='p') pasted++; else if(origin[i]==='t') typed++;
+  }
+  var per=sents.map(function(sn){
+    var t=0,pz=0,j;
+    for(j=sn.start;j<sn.end&&j<origin.length;j++){
+      if(/\s/.test(text.charAt(j))) continue;
+      if(origin[j]==='p') pz++; else if(origin[j]==='t') t++;
+    }
+    var tot=t+pz;
+    if(!tot) return 'u';
+    var frac=pz/tot;
+    return frac>=0.75?'p':frac<=0.25?'t':'m';
+  });
+  var tot=typed+pasted;
+  return {per:per, typed:typed, pasted:pasted,
+          pastedPct: tot?Math.round(pasted/tot*100):0,
+          typedPct: tot?Math.round(typed/tot*100):0};
+}
+
+function drawProvenance(prov,n){
+  var host=document.getElementById('provStrip');
+  if(!prov||!n){ host.innerHTML=''; host.hidden=true; return; }
+  host.hidden=false;
+  var W=Math.max(320,Math.min(1000,n*14)), bw=W/n, gap=n>90?0:Math.min(3,bw*0.22);
+  var COL={t:'#00ff41',p:'#7c5cff',m:'#6e6e85',u:'#2a2a40'},
+      NAME={t:'typed here',p:'pasted in',m:'mixed',u:'unknown'};
+  var r='',i;
+  for(i=0;i<n;i++){
+    var k=prov.per[i]||'u';
+    r+='<rect x="'+(i*bw+gap/2).toFixed(2)+'" y="0" width="'+Math.max(1,bw-gap).toFixed(2)+
+       '" height="9" rx="1.5" fill="'+COL[k]+'" opacity="0.9"><title>Sentence '+(i+1)+': '+NAME[k]+'</title></rect>';
+  }
+  host.innerHTML='<div class="prov-head">Provenance · '+prov.typedPct+'% typed in this window, '+prov.pastedPct+'% pasted</div>'+
+    '<svg viewBox="0 0 '+W+' 9" width="100%" height="9" preserveAspectRatio="none" role="img" aria-label="Typed versus pasted by sentence">'+r+'</svg>'+
+    '<div class="prov-legend"><span><i class="swatch" style="background:#00ff41"></i> typed here</span>'+
+    '<span><i class="swatch" style="background:#7c5cff"></i> pasted in</span>'+
+    '<span><i class="swatch" style="background:#6e6e85"></i> mixed</span></div>'+
+    '<p class="prov-note">This tracks only what happened in the draft box during this visit. Paste a finished draft in and it will read as 100% pasted — that is expected, and it is not a judgement about who wrote it. The strip is useful when you draft or revise here.</p>';
+}
+
+/* ============================================================
+   REWRITE BRIEF — packages only the flagged sentences
+   ============================================================ */
+function sentAt(pos){
+  for(var i=0;i<lastSents.length;i++){
+    if(pos>=lastSents[i].start&&pos<lastSents[i].end) return lastSents[i];
+  }
+  return null;
+}
+function sentText(sn){ return sn.text.replace(/\s+/g,' ').trim(); }
+
+function briefSections(){
+  var cad=lastCad, out={rhythm:[],struct:[],dash:[],word:[]}, seen;
+
+  // 1. flat runs, whole passages, capped at 3
+  (cad.runs||[]).slice(0,3).forEach(function(r){
+    var block=[];
+    for(var i=r[0];i<=r[1];i++){ if(lastSents[i]) block.push(lastSents[i]); }
+    if(block.length) out.rhythm.push(block);
+  });
+  // No single run qualified, but the draft is uniform overall: send the
+  // sentences sitting closest to the mean, since those carry the flatness.
+  if(!out.rhythm.length && cad.cv<0.36 && lastSents.length>=5){
+    var near=lastSents.map(function(sn,i){return {sn:sn,i:i,d:Math.abs(sn.words-cad.mean)};})
+      .sort(function(a,b){return a.d-b.d;}).slice(0,6)
+      .sort(function(a,b){return a.i-b.i;}).map(function(x){return x.sn;});
+    if(near.length) out.rhythmDiffuse=near;
+  }
+
+  // 2. structural tics
+  seen={};
+  findings.filter(function(f){return f.layer==='structure';}).forEach(function(f){
+    f.ranges.slice(0,8).forEach(function(rg){
+      var sn=sentAt(rg[0]); if(!sn||seen[sn.start])return; seen[sn.start]=1;
+      out.struct.push({issue:f.title,text:sentText(sn),words:sn.words,sn:sn});
+    });
+  });
+  out.struct=out.struct.slice(0,8);
+
+  // 3. dashes still doing structural work
+  seen={};
+  findings.filter(function(f){return f.layer==='dash'&&f.sev==='med';}).forEach(function(f){
+    var sn=sentAt(f.ranges[0][0]); if(!sn||seen[sn.start])return; seen[sn.start]=1;
+    out.dash.push({issue:f.title,text:sentText(sn),words:sn.words,sn:sn});
+  });
+  out.dash=out.dash.slice(0,8);
+
+  // 4. worn phrasing — only findings with no mechanical fix
+  seen={};
+  findings.filter(function(f){return f.layer==='phrase'&&!f.fixes.length;}).forEach(function(f){
+    f.ranges.slice(0,12).forEach(function(rg){
+      var sn=sentAt(rg[0]); if(!sn||seen[sn.start])return; seen[sn.start]=1;
+      out.word.push({issue:f.title,phrase:current.slice(rg[0],rg[1]),text:sentText(sn),sn:sn});
+    });
+  });
+  out.word=out.word.slice(0,12);
+  out.rhythmDiffuse=out.rhythmDiffuse||null;
+  return out;
+}
+
+function buildBrief(){
+  if(!lastSents.length) return {text:'',sent:0,words:0};
+  var want={
+    rhythm:document.getElementById('optRhythm').checked,
+    struct:document.getElementById('optStruct').checked,
+    dash:document.getElementById('optDash').checked,
+    word:document.getElementById('optWord').checked
+  };
+  var S=briefSections(), cad=lastCad, L=[], n=0, w=0, num=0, counted={};
+  function tally(sn){ if(sn&&!counted[sn.start]){ counted[sn.start]=1; n++; w+=sn.words; } }
+  var verdict = cad.cv<0.31?'below the 5th percentile of human prose':cad.cv<0.36?'around the 10th percentile':cad.cv<0.43?'around the 25th percentile':cad.cv<0.53?'typical for human prose':'more varied than most human prose';
+
+  L.push("I'm revising a piece of my own writing. A style scanner flagged the passages");
+  L.push("below as reading flat or formulaic. Please suggest revisions.");
+  L.push("");
+  L.push("HOW TO HELP:");
+  L.push("- Preserve my meaning and my argument exactly. Don't add claims I didn't make.");
+  L.push("- Keep my voice. Don't make it more formal or more casual than it already is.");
+  L.push("- Vary sentence length deliberately. Across this draft my sentences average "+cad.mean.toFixed(1));
+  L.push("  words with a coefficient of variation of "+cad.cv.toFixed(2)+",");
+  L.push("  "+verdict+". Short sentences");
+  L.push("  are usually what's missing.");
+  L.push("- Where a dash is doing real structural work, restructure the sentence rather");
+  L.push("  than swapping in a comma. A comma splice is worse than the dash was.");
+  L.push("- Give me two options per item and one line on what you changed.");
+  L.push("- I want better prose, not camouflage. Don't optimise this against AI");
+  L.push("  detectors, and don't introduce errors to make it look more human.");
+  L.push("");
+  L.push("Only the flagged passages are below. They are excerpts from a longer piece,");
+  L.push("so some will read as though they start mid-argument. That's expected.");
+
+  if(want.rhythm&&!S.rhythm.length&&S.rhythmDiffuse){
+    num++;
+    L.push(""); L.push("=== "+num+". UNIFORM RHYTHM ACROSS THE DRAFT ===");
+    L.push("No single run of identical-length sentences, but the draft as a whole varies");
+    L.push("less than most human prose. These sit closest to the average length \u2014 they are");
+    L.push("where the flatness lives. Rewrite so the lengths pull apart.");
+    L.push("");
+    S.rhythmDiffuse.forEach(function(x){ L.push("    ("+x.words+"w) "+sentText(x)); tally(x); });
+  }
+  if(want.rhythm&&S.rhythm.length){
+    num++;
+    L.push(""); L.push("=== "+num+". PASSAGES WHERE THE RHYTHM FLATLINES ===");
+    L.push("Consecutive sentences of near-identical length. Rewrite each block so the");
+    L.push("lengths vary — same content, different cadence.");
+    S.rhythm.forEach(function(block,bi){
+      var lens=block.map(function(x){return x.words;});
+      L.push("");
+      L.push("["+String.fromCharCode(65+bi)+"] "+block.length+" sentences, "+Math.min.apply(null,lens)+"–"+Math.max.apply(null,lens)+" words each:");
+      block.forEach(function(x){ L.push("    ("+x.words+"w) "+sentText(x)); tally(x); });
+    });
+  }
+  if(want.struct&&S.struct.length){
+    num++;
+    L.push(""); L.push("=== "+num+". STRUCTURAL TICS ===");
+    S.struct.forEach(function(it,i){
+      L.push(""); L.push((i+1)+". ["+it.issue+"]"); L.push("   "+it.text);
+      tally(it.sn);
+    });
+  }
+  if(want.dash&&S.dash.length){
+    num++;
+    L.push(""); L.push("=== "+num+". DASHES DOING STRUCTURAL WORK ===");
+    L.push("Substituting punctuation here would break the sentence. These need rewriting.");
+    S.dash.forEach(function(it,i){
+      L.push(""); L.push((i+1)+". ["+it.issue+"]"); L.push("   "+it.text);
+      tally(it.sn);
+    });
+  }
+  if(want.word&&S.word.length){
+    num++;
+    L.push(""); L.push("=== "+num+". WORN PHRASING ===");
+    L.push("Not wrong, just overused. Suggest alternatives that fit what I actually mean.");
+    S.word.forEach(function(it,i){
+      L.push(""); L.push((i+1)+'. "'+it.phrase+'" — '+it.issue); L.push("   "+it.text);
+    });
+  }
+  if(num===0){
+    return {text:"Nothing flagged that needs a rewrite. Either the draft is in good shape\nor every finding above already has a mechanical fix you can apply directly.",sent:0,words:0};
+  }
+  L.push(""); L.push("=== END ===");
+  return {text:L.join("\n"),sent:n,words:w};
+}
+
+function refreshBrief(){
+  var panel=document.getElementById('briefPanel'), b=buildBrief();
+  document.getElementById('briefText').value=b.text;
+  var total=wordCount(current)||1;
+  document.getElementById('briefMeta').textContent =
+    b.sent ? b.sent+' sentences · '+b.words+' words · '+Math.round(b.words/total*100)+'% of your draft'
+           : 'nothing to send';
+  panel.style.display='block';
+}
+
+/* ============================================================
    STATE + WIRING
    ============================================================ */
 var current='', findings=[], findingById={}, selected={}, revised='';
+var lastSents=[], lastCad=null, lastProv=null;
+function updateLiveGlobal(){
+  var ta=document.getElementById('inputText'), t=ta.value, w=wordCount(t), d=(t.match(/\u2014/g)||[]).length;
+  document.getElementById('liveCount').textContent = t.trim() ? w+' words \u00b7 '+d+' em dash'+(d===1?'':'es') : '';
+}
 
 function runScan(text){
   current=text; selected={}; findingById={}; revised='';
   document.getElementById('outputPanel').style.display='none';
+  document.getElementById('briefPanel').style.display='none';
+  document.getElementById('sentReadout').hidden=true;
+  lastProv=null;
   var sents=splitSentences(text), words=wordCount(text);
+  lastSents=sents;
   var inv=scanInvisibles(text);
   var dsh=scanDashes(text,sents);
-  var cad=analyzeCadence(sents);
+  var cad=analyzeCadence(sents); lastCad=cad;
   var st=scanStructure(text,sents,words);
   findings=inv.findings.concat(dsh.findings,st.findings);
   findings.forEach(function(f){findingById[f.id]=f;});
   findings.forEach(function(f){ if(f.safe&&f.fixes.length) selected[f.id]=0; });
   drawScore(score(cad,st.raw,words));
   drawCadence(cad);
+  lastProv=provForSentences(text,sents);
+  drawProvenance(lastProv,sents.length);
   renderFindings(findings);
+  refreshBrief();
   document.getElementById('report').hidden=false;
 }
 
@@ -873,11 +1289,11 @@ document.addEventListener('DOMContentLoaded',function(){
   var ta=document.getElementById('inputText'),
       live=document.getElementById('liveCount');
 
-  function updateLive(){
-    var t=ta.value, w=wordCount(t), d=(t.match(/\u2014/g)||[]).length;
-    live.textContent = t.trim() ? w+' words \u00b7 '+d+' em dash'+(d===1?'':'es') : '';
-  }
-  ta.addEventListener('input',updateLive);
+  function updateLive(){ updateLiveGlobal(); }
+  ta.addEventListener('paste',function(){pasteFlag=true;});
+  ta.addEventListener('drop',function(){pasteFlag=true;});
+  ta.addEventListener('input',function(){provOnInput(ta.value);updateLive();});
+  provReset('t');
 
   document.getElementById('scanBtn').addEventListener('click',function(){
     var t=ta.value;
@@ -891,12 +1307,28 @@ document.addEventListener('DOMContentLoaded',function(){
     },40);
   });
 
+
+  var fi=document.getElementById('fileInput');
+  document.getElementById('importBtn').addEventListener('click',function(){ fi.click(); });
+  fi.addEventListener('change',function(){ if(fi.files&&fi.files[0]) handleImport(fi.files[0]); fi.value=''; });
+  ta.addEventListener('dragover',function(e){ e.preventDefault(); ta.style.borderColor='var(--neon-green)'; });
+  ta.addEventListener('dragleave',function(){ ta.style.borderColor=''; });
+  ta.addEventListener('drop',function(e){
+    ta.style.borderColor='';
+    if(e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files.length){
+      e.preventDefault(); handleImport(e.dataTransfer.files[0]);
+    }
+  });
+
   document.getElementById('sampleBtn').addEventListener('click',function(){
     ta.value=SAMPLE.replace('academic research','academic\u00A0research').replace('proofreader','proof\u200Breader');
+    provReset('p');
     updateLive();
   });
   document.getElementById('clearBtn').addEventListener('click',function(){
-    ta.value=''; updateLive(); document.getElementById('report').hidden=true;
+    ta.value=''; provReset('t'); updateLive();
+    document.getElementById('report').hidden=true;
+    document.getElementById('importNote').hidden=true;
   });
 
   document.getElementById('selectSafeBtn').addEventListener('click',function(){
@@ -932,8 +1364,28 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('dlMd').addEventListener('click',function(){download('revised.md','text/markdown;charset=utf-8',revised);});
   document.getElementById('dlRtf').addEventListener('click',function(){download('revised.rtf','application/rtf',toRtf(revised));});
   document.getElementById('rescanBtn').addEventListener('click',function(){
-    ta.value=revised; updateLive(); runScan(revised);
+    ta.value=revised; provReset('p'); updateLive(); runScan(revised);
     document.getElementById('report').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+
+
+  ['optRhythm','optStruct','optDash','optWord'].forEach(function(id){
+    document.getElementById(id).addEventListener('change',refreshBrief);
+  });
+  document.getElementById('copyBriefBtn').addEventListener('click',function(){
+    var btn=this, t=document.getElementById('briefText').value;
+    if(!t.trim()){ return; }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){flash(btn,'\u2713 Copied');},
+        function(){alert('Copy failed \u2014 select the text and copy manually.');});
+    } else {
+      var el=document.getElementById('briefText'); el.removeAttribute('readonly');
+      el.select(); try{document.execCommand('copy');flash(btn,'\u2713 Copied');}catch(e){alert('Copy failed.');}
+      el.setAttribute('readonly','readonly');
+    }
+  });
+  document.getElementById('dlBrief').addEventListener('click',function(){
+    download('rewrite-brief.txt','text/plain;charset=utf-8',document.getElementById('briefText').value);
   });
 
   document.addEventListener('keydown',function(e){
