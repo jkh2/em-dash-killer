@@ -32,6 +32,7 @@ Worse, a punctuation swap can't fix the sentence underneath. A dash in *"the cit
 | **Sentence cadence** | Length of every sentence, charted. Standard deviation, coefficient of variation, longest uniform run, runs inside the 18–24 word band | 📊 Measured only |
 | **Structure** | "It's not X, it's Y" frames, rule-of-three lists, long sentences chained with "and", punctuation density | 📊 Flagged only |
 | **Word choice** | Wordy constructions with clean substitutions, worn stock phrasing, abstract-noun load | ⚠️ Mixed |
+| **Provenance** | Which sentences were typed in the box vs pasted in, this session | 📊 Observed |
 
 Cadence uniformity is the headline. It is the pattern that survives longest across rewrites, and it is the one thing a writer can see instantly in a chart and never unsee.
 
@@ -41,11 +42,50 @@ The point is that not every dash is a mistake. `—Tolkien` after a quotation is
 
 Paired dashes are handled **as a pair** — both marks transform together, so `The city — shrouded in fog — buzzed` becomes `The city (shrouded in fog) buzzed` and not a broken sentence. Naive find-and-replace gets this wrong every time.
 
+### Import
+
+Drop a `.docx` on the draft box, or use **Import .docx**. A Word file is a zip of XML, and the browser unzips it with `DecompressionStream` — so there's still no library, no upload, and no server. Tracked changes come in as accepted, with a count of what was there. Comments are counted but their text is not imported. `.txt` and `.md` work too.
+
+### Provenance
+
+The tool records which characters arrived by keystroke and which by paste, then shades the cadence chart accordingly. This is a fact about the current browser window, not a guess about authorship — and it's worth being blunt about the limit: **paste a finished draft in and it reads 100% pasted, which is expected and is not a judgement.** It earns its keep when you draft or revise in the box.
+
+### Rewrite brief
+
+The findings that need a writer, packaged as a prompt you can paste into any assistant. Only the flagged sentences go in, never the whole document, and the panel tells you exactly what share of your draft that is. The prompt tells the model to preserve your meaning and voice, cites your actual cadence numbers so it knows what to vary, and explicitly instructs it not to optimise against AI detectors or introduce errors to look human.
+
+### Cadence drill-down
+
+Click any bar to jump to that sentence. It gets selected in the draft box, with its length, its distance from your average, and whether you typed or pasted it.
+
 ## Flatness reading
 
 A 0–100 score with four weighted components: sentence rhythm (40%), punctuation density (20%), structural tics (22%), vocabulary (18%).
 
 **It is not an AI detector.** It does not evade AI detectors, and no number here predicts what any detection service will conclude about your text. Turnitin's detector weighs dozens of features and punctuation is a small contributor — stripping em dashes from a paper moves the score by a few points at most. Treat this the way you'd treat a readability score: a prompt to reread, not a verdict.
+
+### Calibration
+
+The thresholds aren't guesses. They're measured against a corpus of human-written prose — ten public-domain literary works plus contemporary expository writing — segmented into paste-sized passages.
+
+The key finding is that **contemporary expository prose is markedly more uniform than literary prose**: median coefficient of variation 0.395 against 0.535. An early draft of this tool used thresholds that would have flagged the median contemporary academic as suspicious. That's the failure mode that would make it useless for the people it's built for, so the numbers now come from the corpus:
+
+| cv over 10-sentence windows | p05 | p10 | p25 | p50 |
+|---|---|---|---|---|
+| human baseline (n=2,587 windows) | 0.310 | 0.353 | 0.429 | 0.524 |
+
+Validated end to end on 1,283 human-written passages:
+
+| | median score | flagged "leaning flat" (≥45) | flagged "flat" (≥65) |
+|---|---|---|---|
+| **human-written prose** | **9** | **1.0%** | **0.0%** |
+| synthetic uniform text (~200w) | 70 | — | — |
+
+The flat-run detector (5+ consecutive sentences within a 4-word window) was tuned the same way: at the original ±6 / 4+ it fired on 19–27% of human passages, which is useless. It now fires on about 3%.
+
+Reproduce it with `calib2.js` and `validate.js` in the repo.
+
+**Corpus caveat:** the literary half is pre-1930 and the contemporary half is encyclopedic. Neither is a perfect stand-in for a modern journal article or a blog post. The baseline is a real measurement, not a universal constant.
 
 ## The case for the tool
 
@@ -73,6 +113,13 @@ To deploy your own: push to a repo, enable GitHub Pages on the `main` branch.
 
 - **`index.html`** — v2, the scanner. Current.
 - **`v1.html`** — the original August 2025 dash-replacer, kept for reference. Retired, not maintained.
+
+### Added after launch
+- Rewrite brief — flagged sentences only, packaged as a prompt
+- Paste-vs-typed provenance tracking, shaded onto the cadence chart
+- `.docx` import with tracked changes and comment detection, no library
+- Click-a-bar drill-down from the chart to the sentence
+- Recalibrated every cadence threshold against a measured human corpus
 
 ### Changed in v2
 - Rebuilt from auto-rewriter to scanner with assisted edits
